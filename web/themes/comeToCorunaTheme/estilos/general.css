@@ -1,0 +1,148 @@
+* {
+	/* border: 0.5px solid red; */
+}
+
+/*
+PALETA DE COLORES
+
+https://coolors.co/eac435-345995-03cea4-fb4d3d-ca1551
+*/
+:root {
+	--azul-oscuro: #345995; 	/* Para texto blanco */
+	--turquesa: #03CEA4; 		/* Para texto blanco */
+	--amarillo: #EAC435; 		/* Para texto negro  */
+	--rojo: #FB4D3D; 			/* Para texto blanco */
+	--morado: #CA1551; 			/* Para texto blanco */
+}
+
+body {
+	margin: 0;
+	/* font-family: 'Open Sans', sans-serif; */
+	font-family: 'Niramit', sans-serif;
+}
+
+header {
+	background-color: var(--azul-oscuro);
+	/* background: linear-gradient(to left, var(--turquesa), var(--azul-oscuro)) */
+	background: linear-gradient(to left, var(--azul-oscuro), var(--turquesa));
+	color: white;
+	font-weight: bold;
+	position: sticky;
+	top: 0;
+}
+
+header a,
+header a:visited {
+	text-decoration: none;
+	color: inherit;
+}
+
+header .container {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+header .logo {
+    display: flex;
+    align-items: center;
+}
+
+header .menu-superior {
+	/* Con los textos actuales no cabe en 1em,
+	y no se me ocurren otros, desgraciadamente */
+	font-size: 0.9em;
+}
+
+header .logo-hamburger {
+	display: none;
+}
+
+header ul {
+	display: flex;
+	justify-content: space-between;
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+}
+
+header li {
+	padding: 0.3em;
+	margin: 0.3em;
+	text-align: center;
+}
+header li:hover {
+	background-color: var(--morado);
+}
+
+.container {
+	margin: auto;
+	max-width: 990px;
+	padding: 0 1em;
+}
+
+article {
+	line-break: auto;
+}
+
+article img {
+	border-radius: 0.4em;	
+}
+
+footer {
+	background-color: var(--amarillo);
+	color: black;
+}
+
+.fichas {
+	display: flex;
+    justify-content: space-around;
+}
+
+.resaltado {
+	background-color: var(--amarillo);
+	display: block;
+	padding: 1em;
+}
+
+@media screen and (max-width: 800px) {
+	header .container {
+		flex-direction: column;
+		align-items: center;
+	}
+
+	header .menu-superior {
+		display: none;
+	}
+
+	header ul {
+		flex-direction: column;
+	}
+
+	header .logo {
+		width: 90%;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	header .logo-hamburger {
+		display: initial;
+		font-size: xx-large;
+	}
+
+	footer .fichas {
+		flex-direction: column;
+	}
+
+	article img {
+		/* Este estilo se pensó para sobreescribir los de nivel inferior en
+		http://us.quecarallo.net/cometocoruna.com/?why-living-coruna
+
+		No es lo recomendable, pero...
+		*/
+		max-width: 100% !important;
+		float: inherit !important;
+		display: block !important;
+		margin: auto !important;
+	}
+}

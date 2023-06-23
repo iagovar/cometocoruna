@@ -1,0 +1,13 @@
+<div class="calendar">
+{{#each entries}}
+    <div class="event">
+        <h2>{{title}}</h2>
+        <p class="description">Contenido: {{content}}</p>
+        <p class="date">Fecha de inicio: {{initDate}}</p>
+        <p class="date">Fecha de fin: {{endDate}}</p>
+        <p class="price">Precio: {{price}}</p>
+        <a href="{{link}}">Más información</a>
+        <img src="{{image}}" alt="{{title}}">
+    </div>
+{{/each}}
+</div>

@@ -1,0 +1,16 @@
+{
+  "sftp": {
+    "host": "example.com",
+    "port": 22,
+    "username": "your-username",
+    "password": "your-password"
+  },
+  "api1": {
+    "apiKey": "your-api-key1",
+    "apiSecret": "your-api-secret1"
+  },
+  "api2": {
+    "apiKey": "your-api-key2",
+    "apiSecret": "your-api-secret2"
+  }
+}

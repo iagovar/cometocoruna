@@ -1,0 +1,59 @@
+#toc::before {
+	content: "Contents";
+    font-size: 2em;
+    display: block;
+    margin-bottom: 0.5em;
+
+}
+
+#toc {
+    padding: 1em 2em;
+    font-size: 1em;
+    margin-top: 1em;
+    /* border: 3px dashed var(--morado); */
+    background-color: aliceblue;
+}
+
+#toc li {
+    margin: 0.5em 0;
+}
+
+#toc .h1 {
+
+    margin-left: 0;
+    font-size: 1em;
+}
+
+#toc .h2 {
+
+    margin-left: 1em;
+    font-size: 1em;
+}
+
+#toc .h3 {
+
+    margin-left: 2em;
+    font-size: 1em;
+
+}
+
+#toc .h4 {
+
+    margin-left: 3em;
+    font-size: 1em;
+
+}
+
+#toc .h5 {
+
+    margin-left: 4em;
+    font-size: 1em;
+
+}
+
+#toc .h6 {
+
+    margin-left: 5em;
+    font-size: 1em;
+
+}
