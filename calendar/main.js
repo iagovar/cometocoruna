@@ -39,13 +39,16 @@ Tanto el uuid como el source vienen ya generados por los diferentes scripts.
 
 */
 
-// Requerimos los scripts de parsing
+// Requires parsing scripts
 const parseAytoFeed = require('./dataSources/ayto/ayto-rss.js');
 
-// Otras dependencias
-const fs = require('fs');
-const duckdb = require("duckdb");
+// Local dependencies
 const utils = require('./utils.js');
+const db = require('./database.js');
+const events = require('./events.js');
+
+// Other dependencies
+const fs = require('fs');
 const handlebars = require('handlebars');
 const ftpClient = require('ftp');
 
@@ -55,7 +58,7 @@ async function main() {
   const dbPath = './calendar/feed.duckdb';
   const schema = 'main';
   const tableName = 'feed';
-  let miBaseDuckDb = crearBaseDeDatos(dbPath, schema, tableName); // !! This fn defines the schema
+  let miBaseDuckDb = db.crearBaseDeDatos(dbPath, schema, tableName); // !! This fn defines the schema
 
     // 1.1 Read authentication configurations
     const authConfig = JSON.parse(fs.readFileSync('./calendar/authentication.config.json', 'utf-8'));
@@ -69,28 +72,36 @@ async function main() {
 
     const uniqueProjectUUIDNamespace = "1c9aafd0-0a15-11ee-be56-0242ac120002";
 
-    // 2.2 Obtaining events from the Ayto feed (Wait for promises to resolve)
+    // 2.2 Obtaining events from sources
     const aytoURL = "https://www.coruna.gal/web/es/rss/ociocultura";
-    
-    //QUITADO     const aytoEventsArray = await parseAytoFeed(aytoURL, uniqueProjectUUIDNamespace);
+    const aytoEventsPromise= parseAytoFeed(aytoURL, uniqueProjectUUIDNamespace);
+    // const meetupEventsPromise = parseMeetupFeed(uniqueProjectUUIDNamespace);
+    // const ataquillaEventsPromise = parseAtaquillaFeed(uniqueProjectUUIDNamespace);
+
+    const [aytoEventsArray] = await Promise.all([aytoEventsPromise]);
 
     // 2.3 Aggregate events from every source
     let arrayOfAllEvents = [];
-
-    //QUITADO     arrayOfAllEvents.push(...aytoEventsArray);
+    arrayOfAllEvents.push(
+      ...aytoEventsArray
+      // ...meetupEventsArray
+      // ...ataquillaEventsArray
+      );
 
   // 3. Store events in DB
-  //QUITADO   storeEventsInDB(miBaseDuckDb, schema, tableName, arrayOfAllEvents);
+  await db.storeEventsInDB(miBaseDuckDb, schema, tableName, arrayOfAllEvents);
 
   // 4. Generating HTML file
 
     // 4.1 Retrieve events from DB from current day and next 10 days
+    const numDays = 10;
     const initDate = utils.getCurrentDateTimestampFormat();
-    const endDate = utils.getFutureDateTimestampFormat(10);
+    const endDate = utils.getFutureDateTimestampFormat(numDays);
 
-    const eventsToPrint = await getEntriesInRange(miBaseDuckDb, schema, tableName, initDate, endDate);
+    const eventsToPrint = await db.getEntriesInRange(miBaseDuckDb, schema, tableName, initDate, endDate);
 
-    console.log("Eventos: " + eventsToPrint[0].title);
+    // 4.2 Modify eventsToPrint to add new fields and structure
+    const eventsToPush = events.modifyEvents(eventsToPrint, numDays);
 
     // 4.2 Push objects to template
     const templateSourceName = "template.html";
@@ -98,7 +109,7 @@ async function main() {
     const templateSourceString = './calendar/template/' + templateSourceName;
     const templateOutputString = './calendar/template/' + templateOutputName;
 
-    await generateHTML(eventsToPrint, templateSourceString, templateOutputString);
+    await generateHTML(eventsToPush, templateSourceString, templateOutputString);
 
   // 5. Upload HTML file to FTP
   // FTP user gives direct access to the calendar directory
@@ -110,108 +121,6 @@ async function main() {
   await uploadFileByFTP(templateOutputString, remoteFilePath, ftpConfig);
 
 }
-
-
-/**
- * Creates a new database in the specified path if it does not exist.
- *
- * @param {string} dbPath - The path to the database.
- * @param {string} schema - The schema of the table.
- * @param {string} tableName - The name of the table.
- * @return {object} - Returns the newly created database. 
- */
-function crearBaseDeDatos(dbPath, schema, tableName) {
-  let miBaseDuckDb;
-  if (!fs.existsSync(dbPath)) {
-    miBaseDuckDb = new duckdb.Database(dbPath);
-  
-    miBaseDuckDb.all(`CREATE TABLE ${schema}.${tableName} (
-      uuid UUID PRIMARY KEY,
-      title VARCHAR,
-      link VARCHAR,
-      price VARCHAR,
-      initDate TIMESTAMP,
-      endDate TIMESTAMP,
-      content VARCHAR,
-      image VARCHAR,
-      source VARCHAR
-    )`, function (err, response) {if (err) throw err;});
-  
-    console.log(`Database ${dbPath} created successfully.`);
-  } else {
-    // Al parecer esta sintaxis solo crea el archivo si no existe. Si lo hay,
-    // simplemente se conecta a la BD existente.
-    miBaseDuckDb = new duckdb.Database(dbPath);
-    console.error(`Database ${dbPath} already exists. Passing ${miBaseDuckDb}`);
-  }
-  
-  return miBaseDuckDb;
-}
-
-/**
- * Stores events in a database table.
- *
- * @param {Object} miBaseDuckDb - the database connection object
- * @param {string} schema - the schema name to use in the database
- * @param {string} tableName - the table name to insert events into
- * @param {Array} arrayOfAllEvents - an array of event objects to be inserted
- * @return {void}
- */
-function storeEventsInDB(miBaseDuckDb, schema, tableName, events) {
-  events.forEach(event => {
-
-    miBaseDuckDb.all(`INSERT INTO ${schema}.${tableName} VALUES (
-      '${event.uuid}',
-      '${event.title}',
-      '${event.link}',
-      '${event.price}',
-      '${event.initDate}',
-      '${event.endDate}',
-      '${event.content}',
-      '${event.image}',
-      '${event.source}'  
-    )`, function(err, res) {
-      if (err) {
-        console.error(err);
-      } else {
-        //console.log(res[0]);
-      }
-    });
-  });
-}
-
-
-
-/**
- * Returns a Promise that resolves with entries from a specified table in a specified schema
- * between two dates.
- *
- * @param {Object} miBaseDuckDb - the database connection object
- * @param {string} schema - the schema name
- * @param {string} tableName - the table name
- * @param {string} initDate - the initial date in format 'YYYY-MM-DD'
- * @param {string} endDate - the end date in format 'YYYY-MM-DD'
- * @return {Promise<Array>} a Promise that resolves with an array of selected entries
- */
-function getEntriesInRange(miBaseDuckDb, schema, tableName, initDate, endDate) {
-  return new Promise((resolve, reject) => {
-    const query = `
-      SELECT *
-      FROM ${schema}.${tableName}
-      WHERE initDate >= '${initDate}' AND initDate <= '${endDate}'
-    `;
-
-    miBaseDuckDb.all(query, function (err, res) {
-      if (err) {
-        console.error(err);
-        reject(err);
-      } else {
-        resolve(res);
-      }
-    });
-  });
-}
-
 
 
 /**
@@ -244,9 +153,6 @@ function generateHTML(arrayOfObjects, templateSourceString, templateOutputString
     });
   });
 }
-
-
-
 
 
 /**

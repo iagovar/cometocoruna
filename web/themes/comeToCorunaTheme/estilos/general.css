@@ -13,6 +13,7 @@ https://coolors.co/eac435-345995-03cea4-fb4d3d-ca1551
 	--amarillo: #EAC435; 		/* Para texto negro  */
 	--rojo: #FB4D3D; 			/* Para texto blanco */
 	--morado: #CA1551; 			/* Para texto blanco */
+	--link-blue: #0000EE: /* Color de links de webkit */
 }
 
 body {
@@ -105,6 +106,60 @@ footer {
 	padding: 1em;
 }
 
+/* Estilos del calendario */
+
+.calendar {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	justify-content: space-between;
+}
+
+.day {
+	width: 100%;
+	padding: 0.5em;
+	margin: 1em 0;
+	border: 1px solid var(--morado);
+	border-radius: 0.3em;
+	font-size: 1.8em;
+	display: flex;
+	flex-direction: row;
+}
+
+.calendar .event {
+	width: 48%;
+	margin: 0.4em 0;
+	padding: 0.4em;
+	border: 1px solid var(--turquesa);
+	border-radius: 0.4em;
+}
+
+.event .link,
+.event .image {
+	text-align: center;
+}
+
+.event a {
+	display: block;
+	margin: 1em 0;
+	padding: 1em;
+	border: 1px dotted;
+	font-size: larger;
+}
+
+.event a:hover {
+	color: white;
+	background-color: var(--turquesa);
+}
+
+.event .date,
+.event .initDate,
+.event .enDate {
+	display: none;
+}
+
+/* Estilos para teléfonos móviles */
+
 @media screen and (max-width: 800px) {
 	header .container {
 		flex-direction: column;
@@ -144,5 +199,9 @@ footer {
 		float: inherit !important;
 		display: block !important;
 		margin: auto !important;
+	}
+
+	.calendar .event {
+		width: 100%;
 	}
 }

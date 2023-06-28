@@ -30,5 +30,37 @@ function cargarServicio(servicio) {
 	// Obtiene una lista de todos los divs dentro de .contenido-servicios
 	
 }
+
+
+/* Emulando el include() de PHP
+Función para cargar el contenido de los elementos <div> con el atributo source
+tipo:
+
+<div source="http://midominio.com/miarchivo.html"></div>
+
+Para que la función se ejecute automáticamente después de que se haya cargado el DOM,
+coloca el siguiente código justo antes del cierre de la etiqueta <body>:
+
+<script>
+  document.addEventListener('DOMContentLoaded', loadContent);
+</script>
+
+*/
+function loadContent() {
+  var divElements = document.querySelectorAll('div[source]');
   
+  divElements.forEach(function(div) {
+    var sourceURL = div.getAttribute('source');
+    
+    fetch(sourceURL)
+      .then(response => response.text())
+      .then(html => {
+        div.innerHTML = html;
+      })
+      .catch(error => {
+        console.error('Error al cargar el contenido:', error);
+      });
+  });
+}
+
 

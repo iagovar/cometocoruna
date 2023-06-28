@@ -1,4 +1,4 @@
-# ignoramos todos los archivos de configuración
+﻿# ignoramos todos los archivos de configuración
 
 /calendar/authentication.config.json
 /web/config/config.yml
@@ -7,11 +7,13 @@
 
 /web/assets/*
 /web/content/*
-/calendar/calendar-output.html
 
 # Ignoramos los archivos de DuckDB
 /calendar/*.duckdb
 /calendar/*.duckdb.wal
+
+# Ignoramos el output del template
+/calendar/template/calendar-output.html
 
 ###
 # Template para javascript VVVVV

@@ -1,13 +1,18 @@
 <div class="calendar">
 {{#each entries}}
-    <div class="event">
-        <h2>{{title}}</h2>
-        <p class="description">Contenido: {{content}}</p>
-        <p class="date">Fecha de inicio: {{initDate}}</p>
-        <p class="date">Fecha de fin: {{endDate}}</p>
-        <p class="price">Precio: {{price}}</p>
-        <a href="{{link}}">Más información</a>
-        <img src="{{image}}" alt="{{title}}">
-    </div>
+    <div class="day {{cssSelector}}">Events on {{dayName}}</div>
+    {{#each dayEvents}}
+        <div class="event {{source}}">
+            <h3>{{title}}</h3>
+            <p class="description">{{content}}</p>
+            <p class="date">From {{initDate}} to {{endDate}}</p>
+            <p class="humanDate"><strong>Date:</strong> From {{HumanInitDate}} to {{HumanEndDate}}</p>
+            <p class="initDate">{{initDate}}</p>
+            <p class="enDate">{{endDate}}</p>
+            <p class="price"><strong>Price:</strong>  {{price}}</p>
+            <p class="link"><a href="{{link}}">More info about this event</a></p>
+            <p class="image"><img src="{{image}}" alt="{{title}}"></p>
+        </div>
+    {{/each}}
 {{/each}}
 </div>

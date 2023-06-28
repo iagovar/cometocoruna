@@ -1,5 +1,7 @@
 /**
  * Converts an ISO-8601 formatted date string to a DuckDB compatible timestamp string.
+ * 
+ * Example: 2023-06-26T22:00:00.000Z
  *
  * @param {string} isoDate8601 - The ISO-8601 formatted date string to be converted.
  * @return {string} The converted DuckDB compatible timestamp string.
@@ -21,6 +23,8 @@ function convertISOToDuckDBTimestamp(isoDate8601) {
 
 /**
  * Checks if the given value is a valid ISO 8601 date string.
+ * 
+ * Example: 2023-06-26T22:00:00.000Z
  *
  * @param {string} value - The value to be tested.
  * @return {boolean} Returns true if the value is a valid ISO 8601 date string, otherwise false.
@@ -59,9 +63,64 @@ function getFutureDateTimestampFormat(numDays) {
   return `${year}-${month}-${day}`;
 }
 
+
+
+/**
+ * Takes an integer or a Date object and returns an object containing the name of the day,
+ * the day number, and the hour in a specific format. If the input is an integer, it adds the
+ * specified number of days to the current date. If the input is a Date object, it extracts
+ * the day and weekday information from it. Throws an error if the input is neither an integer
+ * nor a Date object.
+ *
+ * @param {number | Date} input - The number of days to add to the current date or a Date object.
+ * @return {Object} An object containing the name of the day, the day number, and the hour in a
+ * specific format.
+ */
+function getDateShortName(input) {
+  const weekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const today = new Date();
+
+  let weekDay = null;
+  let day = null;
+  let hour = null;
+
+  if (Number.isInteger(input)) {
+    // If the input is an integer, add the specified number of days to the current date
+    today.setDate(today.getDate() + input);
+    weekDay = weekDays[today.getDay()];
+    day = today.getDate();
+    hour = `${today.getHours()}:${today.getMinutes().toString().padStart(2, '0')}`;
+  } else if (input instanceof Date) {
+    // If the input is a Date object, extract the day and weekday information from it
+    weekDay = weekDays[input.getDay()];
+    day = input.getDate();
+    hour = `${input.getHours()}:${input.getMinutes().toString().padStart(2, '0')}`;
+  } else {
+    // If the input is neither an integer nor a Date object, throw an error
+    throw new Error('The input must be an integer or a Date object');
+  }
+
+  return { "dayName": `${weekDay} ${day}`, "dayNumber": day, "hour": hour };
+}
+
+/**
+ * Sanitizes a string for DuckDB by replacing single quotes with two consecutive single quotes.
+ *
+ * @param {string} str - The string to be sanitized.
+ * @return {string} The sanitized string.
+ */
+function sanitizeStringForDuckDB(str) {
+  // Reemplazar comillas simples con dos comillas simples consecutivas
+  const sanitizedStr = str.replace(/'/g, "''");
+  return sanitizedStr;
+}
+
+
 module.exports = {
   convertISOToDuckDBTimestamp,
   isValidISODate8601,
   getCurrentDateTimestampFormat,
-  getFutureDateTimestampFormat
+  getFutureDateTimestampFormat,
+  getDateShortName,
+  sanitizeStringForDuckDB
 };
