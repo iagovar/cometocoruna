@@ -16,7 +16,7 @@ function crearBaseDeDatos(dbPath, schema, tableName) {
       miBaseDuckDb = new duckdb.Database(dbPath);
     
       miBaseDuckDb.all(`CREATE TABLE ${schema}.${tableName} (
-        uuid UUID PRIMARY KEY,
+        hash VARCHAR PRIMARY KEY,
         title VARCHAR,
         link VARCHAR,
         price VARCHAR,
@@ -57,7 +57,7 @@ function storeEventsInDB(miBaseDuckDb, schema, tableName, events) {
 
         miBaseDuckDb.all(
           `INSERT INTO ${schema}.${tableName} VALUES (
-          '${event.uuid}',
+          '${event.hash}',
           '${sanitizedTitle}',
           '${event.link}',
           '${sanitizedPrice}',

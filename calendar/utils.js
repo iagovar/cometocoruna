@@ -115,6 +115,17 @@ function sanitizeStringForDuckDB(str) {
   return sanitizedStr;
 }
 
+/**
+ * Converts a Unix epoch timestamp to an ISO 8601 formatted date string.
+ *
+ * @param {number} unixEpoch - The Unix epoch timestamp to convert.
+ * @return {string} The ISO 8601 formatted date string.
+ */
+function convertUnixEpochToISO8601(unixEpoch) {
+  const date = new Date(Number(unixEpoch));
+  return date.toISOString();
+}
+
 
 module.exports = {
   convertISOToDuckDBTimestamp,
@@ -122,5 +133,6 @@ module.exports = {
   getCurrentDateTimestampFormat,
   getFutureDateTimestampFormat,
   getDateShortName,
-  sanitizeStringForDuckDB
+  sanitizeStringForDuckDB,
+  convertUnixEpochToISO8601
 };

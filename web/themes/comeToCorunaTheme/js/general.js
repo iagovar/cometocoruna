@@ -37,14 +37,6 @@ Función para cargar el contenido de los elementos <div> con el atributo source
 tipo:
 
 <div source="http://midominio.com/miarchivo.html"></div>
-
-Para que la función se ejecute automáticamente después de que se haya cargado el DOM,
-coloca el siguiente código justo antes del cierre de la etiqueta <body>:
-
-<script>
-  document.addEventListener('DOMContentLoaded', loadContent);
-</script>
-
 */
 function loadContent() {
   var divElements = document.querySelectorAll('div[source]');
@@ -52,7 +44,7 @@ function loadContent() {
   divElements.forEach(function(div) {
     var sourceURL = div.getAttribute('source');
     
-    fetch(sourceURL)
+    fetch(sourceURL, { cache: 'no-store' })
       .then(response => response.text())
       .then(html => {
         div.innerHTML = html;
@@ -64,3 +56,13 @@ function loadContent() {
 }
 
 
+// Añadimos los event listeners para no llenar el theme de basura
+// Ojo, si falla alguna función, no se ejecutarán las siguientes
+// recuérdalo
+
+document.addEventListener('DOMContentLoaded', function() {
+	console.log("Inicio de carga de funciones para el objeto document")
+  htmlTableOfContents()
+  loadContent()
+  console.log("Fin de carga de funciones para el objeto document")
+});

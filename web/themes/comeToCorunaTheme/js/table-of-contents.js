@@ -18,33 +18,35 @@
  * htmlTableOfContents();
  */
 function htmlTableOfContents (documentRef) {
-    var documentRef = documentRef || document;
-    var toc = documentRef.getElementById('toc');
+    try {
+        var documentRef = documentRef || document;
+        var toc = documentRef.getElementById('toc');
 
-    // No incluímos el h1 en el TOC porque sino incluye el title
-    var headings = [].slice.call(documentRef.body.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+        // No incluímos el h1 en el TOC porque sino incluye el title
+        var headings = [].slice.call(documentRef.body.querySelectorAll('h1, h2, h3, h4, h5, h6'));
 
-    // Generamos atributos en los headings para que sean enlazables
-    headings.forEach(function (heading, index) {
-        var anchor = documentRef.createElement('a');
-        anchor.setAttribute('name', 'toc' + index);
-        anchor.setAttribute('id', 'toc' + index);
-        
-        var link = documentRef.createElement('a');
-        link.setAttribute('href', '#toc' + index);
-        link.textContent = heading.textContent;
-        
-        var div = documentRef.createElement('li');
-        div.setAttribute('class', heading.tagName.toLowerCase());
-        
-        div.appendChild(link);
-        toc.appendChild(div);
-        heading.parentNode.insertBefore(anchor, heading);
-    });
+        // Generamos atributos en los headings para que sean enlazables
+        headings.forEach(function (heading, index) {
+            var anchor = documentRef.createElement('a');
+            anchor.setAttribute('name', 'toc' + index);
+            anchor.setAttribute('id', 'toc' + index);
+            
+            var link = documentRef.createElement('a');
+            link.setAttribute('href', '#toc' + index);
+            link.textContent = heading.textContent;
+            
+            var div = documentRef.createElement('li');
+            div.setAttribute('class', heading.tagName.toLowerCase());
+            
+            div.appendChild(link);
+            toc.appendChild(div);
+            heading.parentNode.insertBefore(anchor, heading);
+        });
+    } catch(err) {console.error(err);}
 }
 
 try {
      module.exports = htmlTableOfContents;
-} catch (e) {
+} catch (err) {
     // module.exports is not defined
 }

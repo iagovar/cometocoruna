@@ -18,14 +18,14 @@
 
 
     <link rel="stylesheet" type="text/css" href="./themes/comeToCorunaTheme/estilos/general.css">
-    <script type="text/javascript" src="./themes/comeToCorunaTheme/js/general.js" defer></script>
+    <script type="text/javascript" src="{{ theme_url }}/js/general.js" defer></script>
     <!-- <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet'> -->
     <link href='https://fonts.googleapis.com/css?family=Niramit' rel='stylesheet'>
     <!-- Table of contents -->
-    <script src="{{ theme_url }}/js/table-of-contents.js"></script>
+    <script src="{{ theme_url }}/js/table-of-contents.js" defer></script>
     <link rel="stylesheet" href="{{ theme_url }}/estilos/table-of-contents.css">
 </head>
-<body onload="htmlTableOfContents()">
+<body>
     <header>
         <div class="container">
             <!-- Logo y menú en la misma fila? -->
@@ -35,12 +35,12 @@
             </div>
             <div class="menu-superior">
                 <ul>
-                    <li><a href="{{ base_url }}/?why-living-coruna">Why Coruna</a></li>
-                    <li><a href="{{ base_url }}/?living-coruna">Living in Coruna</a></li>
-                    <li><a href="{{ base_url }}/?working-coruna">Working in Coruna</a></li>
-                    <li><a href="{{ base_url }}/?meet-people-coruna">Meet people</a></li>
-                    <li><a href="{{ base_url }}/?bureaucracy">Bureaucracy FAQ</a></li>
-                    <li><a href="{{ base_url }}/?services">Services for foreigners</a></li>
+                    <li><a href="{{ base_url }}/why-living-coruna">Why Coruna</a></li>
+                    <li><a href="{{ base_url }}/living-coruna">Living in Coruna</a></li>
+                    <li><a href="{{ base_url }}/working-coruna">Working in Coruna</a></li>
+                    <li><a href="{{ base_url }}/meet-people-coruna">Meet people</a></li>
+                    <li><a href="{{ base_url }}/bureaucracy">Bureaucracy FAQ</a></li>
+                    <li><a href="{{ base_url }}/services">Services for foreigners</a></li>
                 </ul>
             </div>
             <div class="idioma" style="display: none;">Aquí va el selector de idioma</div>

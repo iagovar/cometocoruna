@@ -41,6 +41,8 @@ Tanto el uuid como el source vienen ya generados por los diferentes scripts.
 
 // Requires parsing scripts
 const parseAytoFeed = require('./dataSources/ayto/ayto-rss.js');
+const parseAtaquillaDOM = require('./dataSources/ataquilla/ataquilla-scraper.js');
+const parseMeetupDOM = require('./dataSources/meetup/meetup-scraper.js');
 
 // Local dependencies
 const utils = require('./utils.js');
@@ -70,22 +72,39 @@ async function main() {
     // UUID library, and which we will pass as an argument to the different scripts.
     // Generated with https://www.uuidgenerator.net/version1
 
-    const uniqueProjectUUIDNamespace = "1c9aafd0-0a15-11ee-be56-0242ac120002";
+    // DEPRECATED const uniqueProjectUUIDNamespace = "1c9aafd0-0a15-11ee-be56-0242ac120002";
 
     // 2.2 Obtaining events from sources
-    const aytoURL = "https://www.coruna.gal/web/es/rss/ociocultura";
-    const aytoEventsPromise= parseAytoFeed(aytoURL, uniqueProjectUUIDNamespace);
-    // const meetupEventsPromise = parseMeetupFeed(uniqueProjectUUIDNamespace);
-    // const ataquillaEventsPromise = parseAtaquillaFeed(uniqueProjectUUIDNamespace);
+      // 2.2.1 Ayto of A Coruna
+      const aytoURL = "https://www.coruna.gal/web/es/rss/ociocultura";
+      const aytoEventsPromise= parseAytoFeed(aytoURL);
 
-    const [aytoEventsArray] = await Promise.all([aytoEventsPromise]);
+      // 2.2.2 Ataquilla
+      const ataquillaEntryPoint = 'https://entradas.ataquilla.com/ventaentradas/es/buscar?orderby=next_session&orderway=asc&search_query=Encuentra+tu+evento&search_city=A+Coru%C3%B1a&search_category=';
+      const ataquillaMaxPages = 1; // Más de una página genera duplicados
+      const ataquillaEventsPromise = parseAtaquillaDOM(ataquillaEntryPoint, ataquillaMaxPages);
+
+      // 2.2.3 Meetup (See function documentation for details about active groups)
+      const activeMeetupGroups = [
+        "https://www.meetup.com/es-ES/a-coruna-expats/events/",
+        "https://www.meetup.com/es-ES/english-conversation-language-transfer/events/",
+        "https://www.meetup.com/es-ES/filomeetup-a-coruna/events/",
+        "https://www.meetup.com/esl-378/events/",
+        "https://www.meetup.com/python-a-coruna/events/",
+        "https://www.meetup.com/loopyhoppers/events/"
+      ];
+      const meetupMaxPages = 1; // No pagination implemented, not necessary for now
+      const meetupEventsPromise = parseMeetupDOM(activeMeetupGroups, meetupMaxPages);
+
+
+    const [aytoEventsArray, ataquillaEventsArray, meetupEventsArray] = await Promise.all([aytoEventsPromise, ataquillaEventsPromise, meetupEventsPromise]);
 
     // 2.3 Aggregate events from every source
     let arrayOfAllEvents = [];
     arrayOfAllEvents.push(
-      ...aytoEventsArray
-      // ...meetupEventsArray
-      // ...ataquillaEventsArray
+      ...aytoEventsArray,
+      ...meetupEventsArray,
+      ...ataquillaEventsArray
       );
 
   // 3. Store events in DB

@@ -31,7 +31,7 @@ de inicio y de fin, no de publicación
 const Parser = require('rss-parser');
 const parser = new Parser();
 
-const { v5: uuidv5 } = require('uuid');
+const crypto = require('crypto');
 
 const utils = require('../../utils.js');
 
@@ -48,7 +48,7 @@ const axios = require('axios');
  * @returns {Promise<Array>} - A Promise that resolves to an array of objects with UUID, title,
  * link, initDate, endDate, content, image, and source properties.
  */
-async function parseAytoFeed(url, uniqueProjectUUIDNamespace) {
+async function parseAytoFeed(url) {
     let feed = await parser.parseURL(url);
 
     // Creamos una lista de todos los objetos formateados correctamente para
@@ -56,9 +56,8 @@ async function parseAytoFeed(url, uniqueProjectUUIDNamespace) {
     const listOfObjects = [];
 
     for (let item of feed.items) {
-        // Generamos un UUID para cada item
-        const seed = item.link + item.content;
-        const tempuuid = uuidv5(seed, uniqueProjectUUIDNamespace);
+        // Generamos el hash de la URL utilizando SHA-256 (será la PK de la BD)
+        const urlHash = crypto.createHash('sha256').update(item.link).digest('hex');
 
         // Obtenemos fechas con scraping
         // TODO hay muchos undefineds, errores de retrieval y fechas que no cuadran de formato
@@ -69,7 +68,7 @@ async function parseAytoFeed(url, uniqueProjectUUIDNamespace) {
         const tempEndDate = utils.convertISOToDuckDBTimestamp(item.pubDate);
 
         listOfObjects.push({
-            uuid: tempuuid,
+            hash: urlHash,
             title: item.title,
             link: item.link,
             price: tempScrapedDataObj.retrievedPrice,
@@ -77,7 +76,7 @@ async function parseAytoFeed(url, uniqueProjectUUIDNamespace) {
             endDate: tempEndDate,
             content: item.content,
             image: item['itunes']['image'],
-            source: "ayto"
+            source: "aytoCoruna"
         })
     }
 
@@ -128,6 +127,9 @@ async function scrapeDatesAndPrices(url, alternativeDate) {
         initDate = alternativeDate;
         endDate = alternativeDate;
       }
+
+      // If price is "" then set "Free or unavailable"
+      if (retrievedPrice === "") {retrievedPrice = "Free or unavailable";}
   
       const scrapedData = {
         "retrievedPrice": retrievedPrice,
@@ -140,7 +142,7 @@ async function scrapeDatesAndPrices(url, alternativeDate) {
       console.log(error); // Error handling
   
       const scrapedData = {
-        "retrievedPrice": "Precio no disponible, consulta el enlace",
+        "retrievedPrice": "Free or unavailable",
         "initDate": alternativeDate,
         "endDate": alternativeDate
       };

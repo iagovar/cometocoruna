@@ -1,18 +1,25 @@
 <div class="calendar">
 {{#each entries}}
     <div class="day {{cssSelector}}">Events on {{dayName}}</div>
-    {{#each dayEvents}}
-        <div class="event {{source}}">
-            <h3>{{title}}</h3>
-            <p class="description">{{content}}</p>
-            <p class="date">From {{initDate}} to {{endDate}}</p>
-            <p class="humanDate"><strong>Date:</strong> From {{HumanInitDate}} to {{HumanEndDate}}</p>
-            <p class="initDate">{{initDate}}</p>
-            <p class="enDate">{{endDate}}</p>
-            <p class="price"><strong>Price:</strong>  {{price}}</p>
-            <p class="link"><a href="{{link}}">More info about this event</a></p>
-            <p class="image"><img src="{{image}}" alt="{{title}}"></p>
-        </div>
-    {{/each}}
+    {{#if dayEvents.length}}
+        {{#each dayEvents}}
+            <div class="event {{source}}">
+                <div class="image"><img src="{{image}}" alt="{{title}}"></div>
+                <div class="content">
+                    <h2 class="title">{{title}}</h2>
+                    <p class="date">From {{initDate}} to {{endDate}}</p>
+                    <p class="humanDate"><strong>Date:</strong> From {{HumanInitDate}} to {{HumanEndDate}}</p>
+                    <p class="initDate">{{initDate}}</p>
+                    <p class="enDate">{{endDate}}</p>
+                    <p class="price"><strong>Price:</strong>  {{price}}</p>
+                    <div class="description">{{{content}}}</div>
+                    <p class="source">Source:  {{source}}</p>
+                    <div class="link"><a href="{{link}}">More info</a></div>
+                </div>
+            </div>
+        {{/each}}
+    {{else}}
+        <div class="no-events">No events available</div>
+    {{/if}}
 {{/each}}
 </div>

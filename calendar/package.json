@@ -5,13 +5,13 @@
   "main": "main.js",
   "dependencies": {
     "axios": "^1.4.0",
+    "pup": "^20.7.4",
     "cheerio": "^1.0.0-rc.12",
     "duckdb": "^0.8.1",
     "fs": "^0.0.1-security",
     "ftp": "^0.3.10",
     "handlebars": "^4.7.7",
-    "rss-parser": "^3.13.0",
-    "uuid": "^9.0.0"
+    "rss-parser": "^3.13.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

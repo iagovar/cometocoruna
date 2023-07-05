@@ -13,7 +13,11 @@ https://coolors.co/eac435-345995-03cea4-fb4d3d-ca1551
 	--amarillo: #EAC435; 		/* Para texto negro  */
 	--rojo: #FB4D3D; 			/* Para texto blanco */
 	--morado: #CA1551; 			/* Para texto blanco */
-	--link-blue: #0000EE: /* Color de links de webkit */
+	--link-blue: #0000EE; /* Color de links de webkit */
+	/* Events */
+	--border-radius: 8px;
+	--medium-grey-bg: #EBEBEB;
+	--dark-grey-bg: #B8B8B8;
 }
 
 body {
@@ -87,7 +91,7 @@ article {
 }
 
 article img {
-	border-radius: 0.4em;	
+	border-radius: var(--border-radius);	
 }
 
 footer {
@@ -108,6 +112,7 @@ footer {
 
 /* Estilos del calendario */
 
+
 .calendar {
 	display: flex;
 	flex-direction: row;
@@ -117,48 +122,77 @@ footer {
 
 .day {
 	width: 100%;
-	padding: 0.5em;
+	padding: 0.5em 0;
 	margin: 1em 0;
-	border: 1px solid var(--morado);
-	border-radius: 0.3em;
 	font-size: 1.8em;
 	display: flex;
 	flex-direction: row;
 }
 
+.calendar .no-events,
 .calendar .event {
 	width: 48%;
 	margin: 0.4em 0;
-	padding: 0.4em;
-	border: 1px solid var(--turquesa);
-	border-radius: 0.4em;
+	border-radius: var(--border-radius);
+	background-color: var(--medium-grey-bg);
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
 }
 
-.event .link,
-.event .image {
+.calendar .no-events {
 	text-align: center;
 }
 
-.event a {
-	display: block;
-	margin: 1em 0;
-	padding: 1em;
-	border: 1px dotted;
-	font-size: larger;
+.event .image {
+	text-align: center;
+	margin: 0;
 }
 
+.event .content {
+	margin: 0 1em;
+	height: 100%;
+}
+
+.event .description {
+	font-size: 0.9em;
+}
+
+.event img {
+	width: 100%;
+	height: 25vh;
+	object-fit: cover;
+	border-top-left-radius: var(--border-radius);
+	border-top-right-radius: var(--border-radius);
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+}
+
+.event a {
+	margin: 1em 0;
+	float: right;
+	text-align: center;
+	text-decoration: none;
+	width: fit-content;
+	height: fit-content;
+	padding: 16px 30px;
+	background-color: var(--dark-grey-bg);
+	color: black;
+	border-radius: var(--border-radius)
+}
 .event a:hover {
 	color: white;
-	background-color: var(--turquesa);
-}
+	background-color: var(--turquesa);}
 
 .event .date,
 .event .initDate,
-.event .enDate {
+.event .enDate,
+.event .source {
 	display: none;
 }
 
-/* Estilos para teléfonos móviles */
+/* Estilos para telÃƒÂ©fonos mÃƒÂ³viles */
 
 @media screen and (max-width: 800px) {
 	header .container {
@@ -190,7 +224,7 @@ footer {
 	}
 
 	article img {
-		/* Este estilo se pensó para sobreescribir los de nivel inferior en
+		/* Este estilo se pensÃƒÂ³ para sobreescribir los de nivel inferior en
 		http://us.quecarallo.net/cometocoruna.com/?why-living-coruna
 
 		No es lo recomendable, pero...
@@ -201,6 +235,7 @@ footer {
 		margin: auto !important;
 	}
 
+	.calendar .no-events,
 	.calendar .event {
 		width: 100%;
 	}
