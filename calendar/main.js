@@ -58,13 +58,13 @@ const ftpClient = require('ftp');
 
 async function main() {
   // 1. Create db if it doesn't exist
-  const dbPath = './calendar/feed.duckdb';
+  const dbPath = './feed.duckdb';
   const schema = 'main';
   const tableName = 'feed';
   let miBaseDuckDb = db.crearBaseDeDatos(dbPath, schema, tableName); // !! This fn defines the schema
 
     // 1.1 Read authentication configurations
-    const authConfig = JSON.parse(fs.readFileSync('./calendar/authentication.config.json', 'utf-8'));
+    const authConfig = JSON.parse(fs.readFileSync('./authentication.config.json', 'utf-8'));
 
   // 2. Obtains events from each source
   // Each fn should return an array of objects fitting DB schema perfectly
@@ -137,8 +137,8 @@ async function main() {
     // 4.2 Push objects to template
     const templateSourceName = "template.html";
     const templateOutputName = "calendar-output.html";
-    const templateSourceString = './calendar/template/' + templateSourceName;
-    const templateOutputString = './calendar/template/' + templateOutputName;
+    const templateSourceString = './template/' + templateSourceName;
+    const templateOutputString = './template/' + templateOutputName;
 
     await generateHTML(eventsToPush, templateSourceString, templateOutputString);
 
