@@ -14,6 +14,13 @@ const utils = require('../../utils.js');
 
 
 
+/**
+ * Parses the Meetup DOM to extract event information.
+ *
+ * @param {Array} entryPoints - An array of URLs representing the entry points to scrape.
+ * @param {number} maxPages - The maximum number of pages to scrape.
+ * @return {Promise<Array>} A promise that resolves to an array of event objects.
+ */
 async function parseMeetupDOM(entryPoints, maxPages) {
     try {
       const listOfEvents = [];
@@ -54,7 +61,7 @@ async function parseMeetupDOM(entryPoints, maxPages) {
               price: "", // Set in a block below
               initDate: await element.$eval('time', (time) => time.getAttribute('datetime')),
               endDate: await element.$eval('time', (time) => time.getAttribute('datetime')),
-              content: "",  // Obtained from the event URL below
+              content: await element.$eval('p.description-markdown--p', (p) => p.innerText.trim()),
               image: "",    // Obtained from the event URL below
               source: "Meetup",
             };
@@ -72,7 +79,7 @@ async function parseMeetupDOM(entryPoints, maxPages) {
                 if (item.price === "") {item.price = "Free or unavailable";}
             }
 
-            // Navigating to item.link and getting the event content and image
+            // Navigating to item.link and getting the event image
             const eventPage = await browser.newPage();
             await eventPage.goto(item.link);
             await page.waitForSelector('#a11y-status-message');
@@ -80,12 +87,6 @@ async function parseMeetupDOM(entryPoints, maxPages) {
                 item.image = await eventPage.$eval('div[data-event-label="event-home"] img', (img) => img.getAttribute('src'));
             } catch (error) {
                 item.image = "https://i.imgur.com/Uo8hsw3.png";
-            }
-            try {
-                const contentHTML = await eventPage.$eval('#event-details .break-words', (div) => div.innerHTML);
-                item.content = contentHTML;
-            } catch (error) {
-                item.content = "";
             }
             eventPage.close();
   
@@ -107,6 +108,7 @@ async function parseMeetupDOM(entryPoints, maxPages) {
           } catch(error) {
             console.error("Failed to scrape some Meetup Item: " + error);
             // skip to next item if some current item evaluation fails
+            eventPage.close();
             continue;
           }
         }

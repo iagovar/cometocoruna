@@ -110,7 +110,9 @@ function getDateShortName(input) {
  * @return {string} The sanitized string.
  */
 function sanitizeStringForDuckDB(str) {
-  // Reemplazar comillas simples con dos comillas simples consecutivas
+  // Transform whatever comes as str into a string
+  str = String(str);
+  // Replace simple ' with two consecutive single quotes
   const sanitizedStr = str.replace(/'/g, "''");
   return sanitizedStr;
 }
@@ -126,6 +128,36 @@ function convertUnixEpochToISO8601(unixEpoch) {
   return date.toISOString();
 }
 
+/**
+ * Removes images from the given HTML snippet.
+ *
+ * @param {string} snippetHTML - The HTML snippet containing images.
+ * @return {string} The modified HTML snippet without images.
+ */
+function removeImagesFromSnippet(snippetHTML) {
+  // Create a DOMParser object
+  const parser = new DOMParser();
+
+  // Parse the snippet HTML into an HTML document
+  const doc = parser.parseFromString(snippetHTML, 'text/html');
+
+  // Get all image tags
+  const images = doc.getElementsByTagName('img');
+
+  // Iterate over the image tags and remove them
+  while (images.length > 0) {
+    const image = images[0];
+    image.parentNode.removeChild(image);
+  }
+
+  // Get the modified snippet HTML without the images
+  const snippetWithoutImages = doc.documentElement.innerHTML;
+
+  // Return the snippet HTML without the images
+  return snippetWithoutImages;
+}
+
+
 
 module.exports = {
   convertISOToDuckDBTimestamp,
@@ -134,5 +166,6 @@ module.exports = {
   getFutureDateTimestampFormat,
   getDateShortName,
   sanitizeStringForDuckDB,
-  convertUnixEpochToISO8601
+  convertUnixEpochToISO8601,
+  removeImagesFromSnippet
 };

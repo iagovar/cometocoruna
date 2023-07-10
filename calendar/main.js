@@ -43,6 +43,7 @@ Tanto el uuid como el source vienen ya generados por los diferentes scripts.
 const parseAytoFeed = require('./dataSources/ayto/ayto-rss.js');
 const parseAtaquillaDOM = require('./dataSources/ataquilla/ataquilla-scraper.js');
 const parseMeetupDOM = require('./dataSources/meetup/meetup-scraper.js');
+const parseEventBriteDOM = require('./dataSources/eventbrite/eventbrite-scraper.js');
 
 // Local dependencies
 const utils = require('./utils.js');
@@ -68,7 +69,7 @@ async function main() {
   // 2. Obtains events from each source
   // Each fn should return an array of objects fitting DB schema perfectly
 
-    // 2.1 We generate a unique UUID for the project, which will be requested by the
+    // 2.1 DEPRECATED We generate a unique UUID for the project, which will be requested by the
     // UUID library, and which we will pass as an argument to the different scripts.
     // Generated with https://www.uuidgenerator.net/version1
 
@@ -91,20 +92,31 @@ async function main() {
         "https://www.meetup.com/es-ES/filomeetup-a-coruna/events/",
         "https://www.meetup.com/esl-378/events/",
         "https://www.meetup.com/python-a-coruna/events/",
-        "https://www.meetup.com/loopyhoppers/events/"
+        "https://www.meetup.com/loopyhoppers/events/",
+        "https://www.meetup.com/gdg-coruna/events/",
+        "https://www.meetup.com/gpul-labs/events/",
+        "https://www.meetup.com/quedadas-coruna/events/",
+        "https://www.meetup.com/a-coruna-cork-y-canvas-sessions/events/"
+
       ];
       const meetupMaxPages = 1; // No pagination implemented, not necessary for now
       const meetupEventsPromise = parseMeetupDOM(activeMeetupGroups, meetupMaxPages);
 
+      // 2.2.4 Eventbirte
+      const eventbriteURL = "https://www.eventbrite.es/d/united-states/all-events/?page=1&bbox=-8.735923924902409%2C43.182572282775%2C-8.213386693457096%2C43.64991191572349";
+      const eventbriteMaxPages = 1; // No pagination implemented, not necessary for now
+      const eventbriteEventsPromise = parseEventBriteDOM(eventbriteURL, eventbriteMaxPages, "iagovar@outlook.com", "Mandacarallo2");
 
-    const [aytoEventsArray, ataquillaEventsArray, meetupEventsArray] = await Promise.all([aytoEventsPromise, ataquillaEventsPromise, meetupEventsPromise]);
+
+    const [aytoEventsArray, ataquillaEventsArray, meetupEventsArray, eventbriteEventsArray] = await Promise.all([aytoEventsPromise, ataquillaEventsPromise, meetupEventsPromise, eventbriteEventsPromise]);
 
     // 2.3 Aggregate events from every source
     let arrayOfAllEvents = [];
     arrayOfAllEvents.push(
       ...aytoEventsArray,
       ...meetupEventsArray,
-      ...ataquillaEventsArray
+      ...ataquillaEventsArray,
+      ...eventbriteEventsArray
       );
 
   // 3. Store events in DB
@@ -158,8 +170,17 @@ function generateHTML(arrayOfObjects, templateSourceString, templateOutputString
     // Compile the template with Handlebars
     const template = handlebars.compile(templateSourceObj);
 
-    // Generate the HTML using the data from the array of objects
-    const html = template({ entries: arrayOfObjects });
+    //Create a variable lastUpdated to the current date in dd/mm/yyyy hh:mm
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mn = String(now.getMonth() + 1).padStart(2, '0'); //January is 0!
+    const yyyy = now.getFullYear();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const todayDate = dd + '/' + mn + '/' + yyyy + ' ' + hh + ':' + mm;
+
+    // Generate the HTML using the data from the array of objects and todayDate
+    const html = template({ entries: arrayOfObjects, lastUpdated: todayDate });
 
     // Save the generated HTML to a file
     fs.writeFile(templateOutputString, html, (error) => {

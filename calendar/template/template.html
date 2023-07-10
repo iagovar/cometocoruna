@@ -12,7 +12,8 @@
                     <p class="initDate">{{initDate}}</p>
                     <p class="enDate">{{endDate}}</p>
                     <p class="price"><strong>Price:</strong>  {{price}}</p>
-                    <div class="description">{{{content}}}</div>
+                    <!-- {{variable}} escapes html, {{{variable}}} does not-->
+                    <div class="description">{{content}}</div>
                     <p class="source">Source:  {{source}}</p>
                     <div class="link"><a href="{{link}}">More info</a></div>
                 </div>
@@ -23,3 +24,4 @@
     {{/if}}
 {{/each}}
 </div>
+<div class="lastUpdated"><center>Last Update: {{lastUpdated}}</center></div>
