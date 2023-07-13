@@ -40,7 +40,7 @@ Tanto el uuid como el source vienen ya generados por los diferentes scripts.
 */
 
 // Requires parsing scripts
-const parseAytoFeed = require('./dataSources/ayto/ayto-rss.js');
+const parseAytoFeed = require('./dataSources/aytos/ayto-coruna-rss.js');
 const parseAtaquillaDOM = require('./dataSources/ataquilla/ataquilla-scraper.js');
 const parseMeetupDOM = require('./dataSources/meetup/meetup-scraper.js');
 const parseEventBriteDOM = require('./dataSources/eventbrite/eventbrite-scraper.js');
@@ -132,7 +132,7 @@ async function main() {
     const eventsToPrint = await db.getEntriesInRange(miBaseDuckDb, schema, tableName, initDate, endDate);
 
     // 4.2 Modify eventsToPrint to add new fields and structure
-    const eventsToPush = events.modifyEvents(eventsToPrint, numDays);
+    const eventsToPush = await events.modifyEvents(eventsToPrint, numDays);
 
     // 4.2 Push objects to template
     const templateSourceName = "template.html";
@@ -146,10 +146,13 @@ async function main() {
   // FTP user gives direct access to the calendar directory
   // It also requires to specify the file name for the destination, not only the
   // the destination directory path.
-  const remoteFilePath = "./" + templateOutputName;
+  const localFolderPath = './template/';
+  const remoteFolderPath = './';
+  const localFilePath = localFolderPath + templateOutputName;
+  const remoteFilePath = remoteFolderPath + templateOutputName;
   const ftpConfig = authConfig.ftp; // Obj containing sft config
 
-  await uploadFileByFTP(templateOutputString, remoteFilePath, ftpConfig);
+  await  uploadFileByFTP(localFilePath, remoteFilePath, localFolderPath, remoteFolderPath, ftpConfig)
 
 }
 
@@ -195,15 +198,18 @@ function generateHTML(arrayOfObjects, templateSourceString, templateOutputString
 }
 
 
+
 /**
- * Asynchronously uploads a file to a remote server via FTP.
+ * Uploads a file to a remote server via FTP.
  *
- * @param {string} localFilePath - the local file path to upload
- * @param {string} remoteFilePath - the remote file path to upload to
- * @param {Object} ftpConfig - the FTP configuration object
- * @return {Promise<void>} - a promise that resolves when the file is uploaded successfully
+ * @param {string} localFilePath - The local file path of the file to be uploaded.
+ * @param {string} remoteFilePath - The remote file path where the file will be uploaded.
+ * @param {string} localFolderPath - The local folder path containing the files to be uploaded.
+ * @param {string} remoteFolderPath - The remote folder path where the files will be uploaded.
+ * @param {object} ftpConfig - The FTP configuration object containing the necessary credentials and connection details.
+ * @return {Promise} A promise that resolves when the file is uploaded successfully, or rejects with an error if there is any issue during the upload process.
  */
-async function uploadFileByFTP(localFilePath, remoteFilePath, ftpConfig) {
+async function uploadFileByFTP(localFilePath, remoteFilePath, localFolderPath, remoteFolderPath, ftpConfig) {
   const client = new ftpClient();
 
   try {
@@ -217,7 +223,7 @@ async function uploadFileByFTP(localFilePath, remoteFilePath, ftpConfig) {
     console.log('Connected to FTP server.');
 
     console.log(`Uploading ${localFilePath} file to ${remoteFilePath} in remote server...`);
-    // Upload the local file to the remote server
+    // Upload the local template file to the remote server
     await new Promise((resolve, reject) => {
       client.put(localFilePath, remoteFilePath, (error) => {
         if (error) {
@@ -228,6 +234,61 @@ async function uploadFileByFTP(localFilePath, remoteFilePath, ftpConfig) {
       });
     });
     console.log('File uploaded successfully via FTP.');
+
+    console.log(`Deleting contents of ${remoteFolderPath}img on remote server...`);
+    // Delete the contents of the remote "img" directory
+    try {
+      await new Promise((resolve, reject) => {
+        client.rmdir(`${remoteFolderPath}img`, true, (error) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve();
+          }
+        });
+      });
+      console.log('Contents of remote "img" directory deleted successfully.');
+    } catch (error) {
+      // Handle the error when the directory doesn't exist
+      if (error.code === 550) {
+        console.log(`Directory "${remoteFolderPath}img" does not exist. Skipping removal.`);
+      } else {
+        throw error;
+      }
+    }
+
+    // Creating the "img" directory in the remote server if it doesn't exist
+    try {
+      await new Promise((resolve, reject) => {
+        client.mkdir(`${remoteFolderPath}img`, (error) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve();
+          }
+        });
+      })
+    } catch (error) {
+      console.error('Error creating "img" directory:', error);
+    }
+
+    // Get the list of files in the local "img" directory
+    const files = fs.readdirSync(localFolderPath + '/img');
+
+    // Upload each file to the remote "img" directory
+    for (const file of files) {
+      await new Promise((resolve, reject) => {
+        client.put(localFolderPath + '/img/' + file, remoteFolderPath + '/img/' + file, (error) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve();
+          }
+        });
+      })
+    }
+
+    console.log('Files uploaded successfully via FTP.');
 
   } catch (error) {
     console.error('Error uploading file via FTP:', error);

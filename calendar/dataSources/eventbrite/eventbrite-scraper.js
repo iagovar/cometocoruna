@@ -85,6 +85,7 @@ async function parseEventBriteDOM(entryPoint, maxPages, user, password) {
             scriptContent = await eventPage.$eval('script[type="application/ld+json"]', (script) => script.textContent);
         } catch (error) {
             console.error(error);
+            console.log(`Closing page in ${item.link}`);
             eventPage.close();
             continue;
         }
@@ -97,6 +98,7 @@ async function parseEventBriteDOM(entryPoint, maxPages, user, password) {
             item.endDate = eventData.endDate;
         } catch (error) {
             // If retrieving the date fails, just pass onto the next element
+            console.log(`Closing page in ${item.link}`);
             eventPage.close();
             continue;
         }
@@ -127,6 +129,7 @@ async function parseEventBriteDOM(entryPoint, maxPages, user, password) {
         } catch (error) {
             item.price = "Free or unavailable";
         }
+        console.log(`Closing page in ${item.link}`);
         eventPage.close();
 
         // Generamos el hash de la URL utilizando SHA-256 (será la PK de la BD)
@@ -143,11 +146,12 @@ async function parseEventBriteDOM(entryPoint, maxPages, user, password) {
     } catch(error) {
         console.error("Failed to scrape some Eventbrite Item: " + error);
         // skip to next item if some current item evaluation fails
+        console.log(`Closing page in ${item.link}`);
         eventPage.close();
         continue;
     }
     }
-
+    console.log("Closing browser in eventbrite");
     await browser.close();
     return listOfEvents;
   } catch (error) {

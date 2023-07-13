@@ -76,7 +76,7 @@ async function parseAtaquillaDOM(entryPoint, maxPages) {
         }
       }
     }
-
+    console.log("Closing browser in Ataquilla");
     await browser.close();
     return listOfEvents;
   } catch (error) {

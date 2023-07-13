@@ -2,16 +2,16 @@ Project structure:
 
 - Custom NodeJS calendar code, which retrieves info from RSS, APIs and/or scraping (With Axios, Cheerio and Puppeteer), stores in DuckDB for further analysis. Deploys a simple HTML file into the CMS assets folder via simple FTP connection.
 
+	Be aware: [DuckDB does not work in Musl systems](https://github.com/duckdb/duckdb/issues/7002), like Alpine Linux.
+
 - [PicoCMS](https://picocms.org/) for managing content. Very low complexity PHP CMS that runs fast in my already purchased shared hosting. Reads Markdown and HTML, so no database. No automatic updates, no backoffice, etc. Very low surface of attack --> Peace of mind.
 
 
 ## How to install and run the script
 
-- Asumes you're using Alpine Linux 3.17+. Get your version with `cat /etc/alpine-release`.
+- Asumes you're using Debian 12+. Get your version with `cat /etc/os-release`.
 
 - Assumes you have Git 2.38+, NodeJS 18.14+ and npm 9+ installed (check with `packageName --version` ir install with `apk add packageName`).
-
-	Remember Alpine has no Sudoers by default so if you're in a fresh Alpine install you'll need to log in as root.
 
 - Assumes you have Chromium installed.
 
@@ -37,7 +37,7 @@ Project structure:
 
 	````
 	# Run the cometocoruna.com calendar every day on 6AM
-	0 6 * * * npm start ~/cometocoruna/calendar >/dev/null 2>&1
+	0 6 * * * cd ~/cometocoruna/calendar/ && npm start > debug.log 2>&1
 
 	````
 
@@ -51,3 +51,7 @@ Project structure:
 	- There's also a very useful [Crontab generator](https://crontab-generator.org/).
 
 8. Any update in the script will require a `git pull` in `~/cometocoruna` to bring it to local.
+
+## How to run the website
+
+It should run in pretty much any standard php shared hosting, really. I'm actually running it in a low-budget one, so, in general, just upload by FTP, as PicoCMS requires no installation.

@@ -88,6 +88,7 @@ async function parseMeetupDOM(entryPoints, maxPages) {
             } catch (error) {
                 item.image = "https://i.imgur.com/Uo8hsw3.png";
             }
+            console.log(`Closing page in ${item.link}`);
             eventPage.close();
   
             // Generamos el hash de la URL utilizando SHA-256 (será la PK de la BD)
@@ -108,12 +109,13 @@ async function parseMeetupDOM(entryPoints, maxPages) {
           } catch(error) {
             console.error("Failed to scrape some Meetup Item: " + error);
             // skip to next item if some current item evaluation fails
+            console.log(`Closing page in ${item.link}`);
             eventPage.close();
             continue;
           }
         }
       }
-  
+      console.log("Closing browser in Meetup");
       await browser.close();
       return listOfEvents;
     } catch (error) {

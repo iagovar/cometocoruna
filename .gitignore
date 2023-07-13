@@ -14,7 +14,7 @@
 
 # Ignoramos el output del template
 /calendar/template/calendar-output.html
-
+/calendar/template/img/
 ###
 # Template para javascript VVVVV
 ###
