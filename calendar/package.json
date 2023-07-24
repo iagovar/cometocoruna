@@ -1,18 +1,19 @@
 {
   "name": "cometocoruna-calendar",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "RSS & API orchestrator, retrieving info, storing in DB and exporting HTML through FTP.",
   "main": "main.js",
   "dependencies": {
     "axios": "^1.4.0",
     "cheerio": "^1.0.0-rc.12",
+    "date-fns": "^2.30.0",
     "duckdb": "^0.8.1",
     "fs": "^0.0.1-security",
     "ftp": "^0.3.10",
     "handlebars": "^4.7.7",
+    "html-to-text": "^9.0.5",
     "puppeteer": "^20.7.4",
-    "rss-parser": "^3.13.0",
-    "sqlite3": "^5.1.6"
+    "rss-parser": "^3.13.0"
   },
   "scripts": {
     "start": "node main.js",

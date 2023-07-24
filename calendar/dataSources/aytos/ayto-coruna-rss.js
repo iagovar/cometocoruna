@@ -1,159 +1,114 @@
-/*
-
-Script para obtener el contenido del RSS del Ayto de A Coruña.
-
-Usando el paquete rss-parser para obtener los datos: https://www.npmjs.com/package/rss-parser
-
----
-
-El RSS del Ayto contiene items con la siguiente estructura:
-
-title: Autoexplicativo
-link: URL del evento
-pubDate: Fecha de publicación
-isoDate: Fecha en formato  ISO 8601, machine readable: 2023-05-14T22:00:00.000Z
-content: Descripción del evento
-guid: En este caso el global unique identifier es la URL del evento
-
-¡Ojo! Hay elementos que rss-parser no parsea, como los <media:etc> por algún motivo
-Usaremos:
-
-itunes:summary: Descripción del evento (accediendo con ['itunes']['summary'])
-itunes:image: URL de la imagen del evento (accediendo con ['itunes']['image'])
-
-Es necesario generar un uuid para cada item con la librería uuid.
-
-TODO: Hay que scrapear las fechas, las del RSS son muy vagas y se necesita fecha
-de inicio y de fin, no de publicación
-
-*/
-
 const Parser = require('rss-parser');
 const parser = new Parser();
-
-const crypto = require('crypto');
-
-const utils = require('../../utils.js');
+const { convert } = require('html-to-text');
+const { EventItem } = require('../../eventClass.js');
 
 const cheerio = require('cheerio');
 const axios = require('axios');
 
+
 /**
- * Parses the A Coruna Municipality feed from a given URL and creates a list of objects formatted
- * for the destination database schema.
+ * Parses an AytoCorunaFeed from a given URL.
  *
- * @async
- * @param {string} url - The URL of the Ayto feed.
- * @param {string} uniqueProjectUUIDNamespace - The UUID namespace for generating unique IDs.
- * @returns {Promise<Array>} - A Promise that resolves to an array of objects with UUID, title,
- * link, initDate, endDate, content, image, and source properties.
+ * @param {string} url - The URL of the feed to parse.
+ * @return {Array} An array of objects representing the parsed feed items.
  */
-async function parseAytoFeed(url) {
-    let feed = await parser.parseURL(url);
-
-    // Creamos una lista de todos los objetos formateados correctamente para
-    // el destino (ver main.js para el schema de la DB)
-    const listOfObjects = [];
-
-    for (let item of feed.items) {
-        // Generamos el hash de la URL utilizando SHA-256 (será la PK de la BD)
-        const urlHash = crypto.createHash('sha256').update(item.link).digest('hex');
-
-        // Obtenemos fechas con scraping
-        // TODO hay muchos undefineds, errores de retrieval y fechas que no cuadran de formato
-        const tempScrapedDataObj = await scrapeDatesAndPrices(item.link, item.pubDate);
-
-        // Convertimos fechas
-        const tempInitialDate = utils.convertISOToDuckDBTimestamp(item.pubDate);
-        const tempEndDate = utils.convertISOToDuckDBTimestamp(item.pubDate);
-
-        listOfObjects.push({
-            hash: urlHash,
-            title: item.title,
-            link: item.link,
-            price: tempScrapedDataObj.retrievedPrice,
-            initDate: tempInitialDate,
-            endDate: tempEndDate,
-            content: item.content,
-            image: item['itunes']['image'],
-            source: "aytoCoruna"
-        })
+async function parseAytoCorunaFeed(url) {
+    // Trying to download the feed
+    let feed = null;
+    try {
+        feed = await parser.parseURL(url);
+    } catch (error) {
+        console.error(`\n\nError parsing feed. Returning and empty array. \n${error}`);
+        return [];
     }
 
-    return listOfObjects;
-}
+    // iterating through the feed items
+    let listOfEvents = [];
 
+    for (let singleEvent of feed.items) {
+      let item = {source: "aytoCoruna"};
 
-
-/**
- * Scrape dates and prices from a URL using Cheerio and Axios.
- *
- * @param {string} url - URL to scrape.
- * @param {string} alternativeDate - ISO 8601 date string to use if date is invalid.
- * @return {Object} Object with retrievedPrice, initDate, and endDate properties.
- */
-async function scrapeDatesAndPrices(url, alternativeDate) {
-    let initDate;
-    let endDate;
-    let retrievedPrice;
-  
-    try {
-      const response = await axios.get(url);
-      const htmlContent = response.data;
-      const cheerioInstance = cheerio.load(htmlContent);
-  
-      // Selection of the meta element with the "startDate" property
-      const startDateMeta = cheerioInstance('meta[property="startDate"]');
-      
-      // Retrieval of the value of the "content" attribute and removal of the last character
-      // Dates usually come in the format 2023-07-05 21:00:00.0 and need to be
-      // converted to 2023-07-05 21:00:00 by removing the last ".n"
-      initDate = startDateMeta.attr('content').slice(0, -2);
-  
-      // Selection of the meta element with the "endDate" property
-      const endDateMeta = cheerioInstance('meta[property="endDate"]');
-      
-      // Retrieval of the value of the "content" attribute and removal of the last character
-      endDate = endDateMeta.attr('content').slice(0, -2);
-  
-      // Selection of the div element with the "price" property
-      const priceDiv = cheerioInstance('div.preciosuceso[property="offers"] p');
-  
-      // retrieval of the value of the p element containing the price
-      retrievedPrice = priceDiv.text()
-  
-      // If dates are not valid, use alternativeDate
-      if (!utils.isValidISODate8601(initDate) || !utils.isValidISODate8601(endDate)) {
-        initDate = alternativeDate;
-        endDate = alternativeDate;
+      // Going after the title and link
+      try {
+          item.title = singleEvent.title;
+          item.link = singleEvent.link;
+      } catch (error) {
+          console.error(`\n\nSkipping: Failed locating title and link in aytoCoruna item:\n${error}`);
+          continue;
       }
 
-      // If price is "" then set "Free or unavailable"
-      if (retrievedPrice === "") {retrievedPrice = "Free or unavailable";}
-  
-      const scrapedData = {
-        "retrievedPrice": retrievedPrice,
-        "initDate": initDate,
-        "endDate": endDate
-      };
-  
-      return scrapedData;
-    } catch (error) {
-      console.log(error); // Error handling
-  
-      const scrapedData = {
-        "retrievedPrice": "Free or unavailable",
-        "initDate": alternativeDate,
-        "endDate": alternativeDate
-      };
-  
-      return scrapedData;
+      // Getting the link HTML as we need it to parse dates, that arse not provided
+      // in the RSS feed
+      const response = await axios.get(item.link);
+      const eventPage = cheerio.load(response.data);
+
+      // Going after the initDate
+      try {
+          item.initDate = eventPage('meta[property="startDate"]').attr('content');
+      } catch (error) {
+          console.error(`\n\nSkipping and closing tab: Failed locating start date in ${item.link}:\n${error}`);
+          await eventPage.close();
+          continue;
+      }
+
+      // Going after the endDate
+      try {
+          item.endDate = eventPage('meta[property="endDate"]').attr('content');
+      } catch (error) {
+          console.error(`\n\nFailed locating end date in ${item.link}, setting initDate as endDate:\n${error}`);
+          item.endDate = item.initDate; 
+      }
+
+      // Extracting image url from the feed xml
+      try {
+          item.image = singleEvent['itunes']['image']
+      } catch (error) {
+          console.error(`\n\nFailed to obtain image in ${item.link}, setting a default one:\n${error}`);
+          item.image = "https://i.imgur.com/2rzELfg.jpg"; // Logo aytocoruna
+      }
+
+      // Going after the content
+      try {
+        // Convert() strips of html tags
+        item.content = singleEvent.content;
+      } catch (error) {
+        console.error(`\n\nFailed to obtain description in ${item.link}, setting description to '':\n${error}`);
+        item.content = "";
+      }
+
+      // Going after the price
+      try {
+        item.price = eventPage('div.preciosuceso[property="offers"] p').text();
+      } catch (error) {
+        console.error(`\n\nFailed to obtain price in ${item.link}, setting it to 'Free or unavailable':\n${error}`);
+        item.price = "Free or unavailable";
+      }
+
+      // if nothing failed create an event instance and push it to the list of events
+      // The EventItem constructor should handle all sanity checks and conversions
+      const tempItem = new EventItem(
+        item.title,
+        item.link,
+        item.price,
+        item.content,
+        item.image,
+        item.source,
+        item.initDate,
+        item.endDate
+      );
+
+      listOfEvents.push(tempItem);
+
     }
 
+    return listOfEvents;
 }
-  
 
-
+/*
+const aytoURL = "https://www.coruna.gal/web/es/rss/ociocultura";
+const aytoEventsPromise= parseAytoFeed(aytoURL);
+*/
 
 // Exportamos el módulo
-module.exports = parseAytoFeed;
+module.exports = parseAytoCorunaFeed;

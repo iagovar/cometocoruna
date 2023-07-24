@@ -1,6 +1,5 @@
 const duckdb = require("duckdb");
 const fs = require('fs');
-const utils = require('./utils.js');
 
 /**
  * Creates a new database in the specified path if it does not exist.
@@ -10,18 +9,19 @@ const utils = require('./utils.js');
  * @param {string} tableName - The name of the table.
  * @return {object} - Returns the newly created database. 
  */
-function crearBaseDeDatos(dbPath, schema, tableName) {
+function createDataBase(dbPath, schema, tableName) {
     let miBaseDuckDb;
     if (!fs.existsSync(dbPath)) {
       miBaseDuckDb = new duckdb.Database(dbPath);
     
       miBaseDuckDb.all(`CREATE TABLE ${schema}.${tableName} (
-        hash VARCHAR PRIMARY KEY,
+        link VARCHAR PRIMARY KEY,
         title VARCHAR,
-        link VARCHAR,
         price VARCHAR,
-        initDate TIMESTAMP,
-        endDate TIMESTAMP,
+        initDateISO TIMESTAMP,
+        endDateISO TIMESTAMP,
+        initDateHuman VARCHAR,
+        endDateHuman VARCHAR,
         content VARCHAR,
         image VARCHAR,
         source VARCHAR
@@ -48,32 +48,33 @@ function crearBaseDeDatos(dbPath, schema, tableName) {
  * @return {Promise} A promise that resolves when all events have been inserted.
  */
 function storeEventsInDB(miBaseDuckDb, schema, tableName, events) {
-    return new Promise((resolve, reject) => {
-      events.forEach(event => {
-        // Sanitize some strings before inserting
-        sanitizedTitle = utils.sanitizeStringForDuckDB(event.title);
-        sanitizedPrice = utils.sanitizeStringForDuckDB(event.price);
-        sanitizedContent = utils.sanitizeStringForDuckDB(event.content);
-
-        miBaseDuckDb.all(
-          `INSERT INTO ${schema}.${tableName} VALUES (
-          '${event.hash}',
-          '${sanitizedTitle}',
-          '${event.link}',
-          '${sanitizedPrice}',
-          '${event.initDate}',
-          '${event.endDate}',
-          '${sanitizedContent}',
-          '${event.image}',
-          '${event.source}'
-          )`,
-          function(err, res) {if (err) {console.error(err);}});
-        }); // -> Closing foreach, hate it when there's 3000 brackets
-        // Solve the promise when all the events are inserted, despite errors,
-        // so no intention to reject the promise.
-        resolve();
-      })
-}
+  return new Promise((resolve, reject) => {
+    for (const singleEvent of events) {
+      if (singleEvent.isValidEvent == true) {
+          miBaseDuckDb.all(
+            `INSERT INTO ${schema}.${tableName} VALUES (
+            '${singleEvent.link}',
+            '${singleEvent.title}',
+            '${singleEvent.price}',
+            '${singleEvent.initDateISO}',
+            '${singleEvent.endDateISO}',
+            '${singleEvent.initDateHuman}',
+            '${singleEvent.endDateHuman}',
+            '${singleEvent.content}',
+            '${singleEvent.image}',
+            '${singleEvent.source}'
+            )`,
+            function(err, res) {
+              if (err) {
+                console.error(`Error storing in DB:\n${err}\nEvent producing error in DB is:\n${JSON.stringify(singleEvent)}`);
+                ;}
+            });  
+      };
+    };
+    // Loop finished, resolve the promise
+    resolve();
+  });
+};
 
 /**
  * Returns a Promise that resolves with entries from a specified table in a specified schema
@@ -82,16 +83,16 @@ function storeEventsInDB(miBaseDuckDb, schema, tableName, events) {
  * @param {Object} miBaseDuckDb - the database connection object
  * @param {string} schema - the schema name
  * @param {string} tableName - the table name
- * @param {string} initDate - the initial date in format 'YYYY-MM-DD'
- * @param {string} endDate - the end date in format 'YYYY-MM-DD'
+ * @param {string} initDateISO - the initial date in format 'YYYY-MM-DD'
+ * @param {string} endDateISO - the end date in format 'YYYY-MM-DD'
  * @return {Promise<Array>} a Promise that resolves with an array of selected entries
  */
-function getEntriesInRange(miBaseDuckDb, schema, tableName, initDate, endDate) {
+function getEntriesInRange(miBaseDuckDb, schema, tableName, initDateISO, endDateISO) {
     return new Promise((resolve, reject) => {
       const query = `
         SELECT *
         FROM ${schema}.${tableName}
-        WHERE initDate >= '${initDate}' AND initDate <= '${endDate}'
+        WHERE initDateISO >= '${initDateISO}' AND initDateISO <= '${endDateISO}'
       `;
   
       miBaseDuckDb.all(query, function (err, res) {
@@ -107,7 +108,7 @@ function getEntriesInRange(miBaseDuckDb, schema, tableName, initDate, endDate) {
 
 
 module.exports = {
-    crearBaseDeDatos,
+    createDataBase,
     storeEventsInDB,
     getEntriesInRange
   }

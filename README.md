@@ -11,7 +11,7 @@ Project structure:
 
 - Asumes you're using Debian 12+. Get your version with `cat /etc/os-release`.
 
-- Assumes you have Git 2.38+, NodeJS 18.14+ and npm 9+ installed (check with `packageName --version` ir install with `apk add packageName`).
+- Assumes you have Git 2.38+, NodeJS 18.14+ and npm 9+ installed (check with `packageName --version` or install with `apt install packageName`).
 
 - Assumes you have Chromium installed.
 
