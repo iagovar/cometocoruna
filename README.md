@@ -1,8 +1,10 @@
 Project structure:
 
-- Custom NodeJS calendar code, which retrieves info from RSS, APIs and/or scraping (With Axios, Cheerio and Puppeteer), stores in DuckDB for further analysis. Deploys a simple HTML file into the CMS assets folder via simple FTP connection.
+- Custom NodeJS calendar code, which retrieves info from RSS, APIs and/or scraping (With Axios, Cheerio and Puppeteer), stores in ~~DuckDB~~ SQLite for further analysis. Deploys a simple HTML file into the CMS assets folder via simple FTP connection.
 
 	Be aware: [DuckDB does not work in Musl systems](https://github.com/duckdb/duckdb/issues/7002), like Alpine Linux.
+
+	- Switched from DuckDB to SQLite as the former still requires some work to use with DBveaber and other tools. DuckDB can work with SQLite as an OLAP layer on top, if I want that capability in the future.
 
 - [PicoCMS](https://picocms.org/) for managing content. Very low complexity PHP CMS that runs fast in my already purchased shared hosting. Reads Markdown and HTML, so no database. No automatic updates, no backoffice, etc. Very low surface of attack --> Peace of mind.
 

@@ -8,9 +8,10 @@
 /web/assets/*
 /web/content/*
 
-# Ignoramos los archivos de DuckDB
+# Ignoramos los archivos de base de datos
 /calendar/*.duckdb
 /calendar/*.duckdb.wal
+/calendar/*.sqlite3
 
 # Ignoramos el output del template
 /calendar/template/calendar-output.html

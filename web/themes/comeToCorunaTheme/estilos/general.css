@@ -117,7 +117,7 @@ footer {
 	display: flex;
 	flex-direction: row;
 	flex-wrap: wrap;
-	justify-content: space-between;
+	justify-content: flex-start;
 }
 
 .day {
@@ -131,8 +131,8 @@ footer {
 
 .calendar .no-events,
 .calendar .event {
-	width: 48%;
-	margin: 0.4em 0;
+	width: 32%;
+	margin: 0.4em 0.4em 0 0;
 	border-radius: var(--border-radius);
 	background-color: var(--medium-grey-bg);
 	padding: 0;
@@ -157,6 +157,8 @@ footer {
 
 .event .description {
 	font-size: 0.9em;
+	max-height: 25vh;
+	overflow: hidden;
 }
 
 .event img {
@@ -192,7 +194,12 @@ footer {
 	display: none;
 }
 
-/* Estilos para telÃƒÂ©fonos mÃƒÂ³viles */
+.lastUpdated {
+	margin: 2em 0;
+	font-size: small;
+}
+
+/* Estilos para telÃƒÆ’Ã‚Â©fonos mÃƒÆ’Ã‚Â³viles */
 
 @media screen and (max-width: 800px) {
 	header .container {
@@ -224,7 +231,7 @@ footer {
 	}
 
 	article img {
-		/* Este estilo se pensÃƒÂ³ para sobreescribir los de nivel inferior en
+		/* Este estilo se pensÃƒÆ’Ã‚Â³ para sobreescribir los de nivel inferior en
 		http://us.quecarallo.net/cometocoruna.com/?why-living-coruna
 
 		No es lo recomendable, pero...
@@ -238,5 +245,6 @@ footer {
 	.calendar .no-events,
 	.calendar .event {
 		width: 100%;
+		margin: 0.4em 0;
 	}
 }

@@ -116,7 +116,7 @@ async function parseAtaquillaDOM(entryPoint, maxPages) {
           item.endDate = new Date(tempEndDate);
       } catch (error) {
           // if datetime is not found in wrapper, extract it from eventPage
-          console.error(`e\n\nndDate datetime attribute not found in ${item.link}, trying to extract it from eventPage:\n${error}`);
+          console.error(`\n\nendDate datetime attribute not found in ${item.link}, trying to extract it from eventPage:\n${error}`);
           try {
                 tempEndDate = await eventPage.$eval('span[itemprop="endDate"]', (span) => span.getAttribute('datetime'));
                 item.endDate = new Date(tempEndDate);            

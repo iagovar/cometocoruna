@@ -1,4 +1,4 @@
-const { add, format } = require('date-fns');
+const { add, format, startOfDay, endOfDay } = require('date-fns');
 const axios = require('axios');
 const fs = require('fs');
 
@@ -16,13 +16,25 @@ async function eventClustering(events, numDays, imgLocalDestinationFolder, imgRe
 
     for (const cluster of clusterList) {
         for (const event of events) {
+            // if an event is already in a cluster, continue
+            if (cluster.dayEvents.includes(event)) {
+                continue;
+            }
 
+            // If an event ends befor cluster, or starts after it, continue
             const eventInitDate = new Date(event.initDateISO);
             const eventEndDate = new Date(event.endDateISO);
+            const clusterInitDate = startOfDay(cluster.date);
+            const clusterEndDate = endOfDay(cluster.date);
 
-            if (eventInitDate <= cluster.date && eventEndDate >= cluster.date) {
-                cluster.dayEvents.push(event);
+            const eventEndsBeforeCluster = eventEndDate < clusterInitDate;
+            const eventStartsAfterCluster = eventInitDate > clusterEndDate;
+
+            if (eventEndsBeforeCluster || eventStartsAfterCluster) {
+                continue;
             }
+
+            cluster.dayEvents.push(event);
         }
     }
 
@@ -57,7 +69,7 @@ async function eventClustering(events, numDays, imgLocalDestinationFolder, imgRe
 
 function generateClusters(numDays) {
     const clusterList = [];
-    const today = new Date();
+    const today = startOfDay(new Date());
 
     // Generate a cluster for every day
     for (let index = 0; index < numDays; index++) {

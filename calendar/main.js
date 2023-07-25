@@ -1,6 +1,6 @@
 /*
 
-Orquestador de eventos para todas las fuentes de datos.
+Event orchestrator for all events.
 
 1. Fetch events by calling different scripts responsible for each source.
 2. Store the events in a DuckDB database.
@@ -29,10 +29,10 @@ const dateFns = require('date-fns');
 
 async function main() {
   // 1. Create db if it doesn't exist
-  const dbPath = './feed.duckdb';
-  const schema = 'main';
-  const tableName = 'feed';
-  let miBaseDuckDb = db.createDataBase(dbPath, schema, tableName); // !! This fn defines the schema
+  const dbPath = './cometocoruna.sqlite3';
+  const schema = 'main'; // Not necessary for SQLite, only DuckDB
+  const tableName = 'events';
+  let myDatabase = db.createDataBase(dbPath, schema, tableName); // !! This fn defines the schema
 
     // 1.1 Read authentication configurations
     const authConfig = JSON.parse(fs.readFileSync('./authentication.config.json', 'utf-8'));
@@ -110,18 +110,18 @@ async function main() {
       );
 
   // 3. Store events in DB
-  await db.storeEventsInDB(miBaseDuckDb, schema, tableName, arrayOfAllEvents);
+  await db.storeEventsInDB(myDatabase, schema, tableName, arrayOfAllEvents);
 
   // 4. Generating HTML file
 
-    // 4.1 Retrieve events from DB from current day and next 10 days
+    // 4.1 Retrieve events from DB from past 10 days and next 10 days
     const numDays = 10;
-    const initDateObj = new Date();
-    const endDateObj = dateFns.add(initDateObj, { days: numDays })
+    const initDateObj = dateFns.sub(dateFns.startOfDay(new Date()), { days: numDays })
+    const endDateObj = dateFns.add(dateFns.startOfDay(new Date()), { days: numDays })
     const initDateISO = dateFns.formatISO(initDateObj)
     const endDateISO = dateFns.formatISO(endDateObj)
 
-    const eventsToPrint = await db.getEntriesInRange(miBaseDuckDb, schema, tableName, initDateISO, endDateISO);
+    const eventsToPrint = await db.getEntriesInRange(myDatabase, schema, tableName, initDateISO, endDateISO);
 
     // 4.2 Modify eventsToPrint to add new fields and structure
     // Event clustering also downloads and modifies images for each event.
@@ -152,6 +152,8 @@ async function main() {
 
   await  uploadFileByFTP(localFilePath, remoteFilePath, localFolderPath, remoteFolderPath, ftpConfig)
 
+  // closing database connection
+  myDatabase.close();
 }
 
 main();
