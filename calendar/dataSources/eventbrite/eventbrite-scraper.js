@@ -104,6 +104,10 @@ async function parseEventBriteDOM(entryPoint, maxPages, user, password) {
             continue;
         }
 
+        // Checking if the event is online, in such case, ignore and continue
+        const isOnline = EventItem.checkIfOnline(eventData);
+        if (isOnline) {continue;}
+
         // Going after initDate
         try {
             item.initDate = new Date(eventData.startDate);

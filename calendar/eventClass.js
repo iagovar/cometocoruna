@@ -185,6 +185,34 @@ class EventItem {
         return urlHash;
     }
 
+    /**
+     * Checks if the given object or any of its nested objects or arrays contain the string "online".
+     *
+     * @param {object|array} objToCheck - The object or array to check.
+     * @return {boolean} Returns true if the object or any of its nested objects or arrays contain the string "online", otherwise returns false.
+     */
+    static checkIfOnline(objToCheck) {
+      // Object.values allows to iterate from both object values
+      // or arrays, that it's what we'll find in JSON from pages.
+      for (const iterator of Object.values(objToCheck)) {
+          // if iterator is a string, check if it contains "online"
+          if (typeof iterator === "string" && iterator.includes("online")) {
+              return true;
+          }
+          // if iterator is an array or object, call checkIfOnline() recursively on it
+          const isAnArray = Array.isArray(iterator);
+          const isAnObject = typeof iterator === "object";
+  
+          if (isAnArray || isAnObject) {
+              if (EventItem.checkIfOnline(iterator)) {
+                  return true;
+              }
+          }
+      }
+      // If we cant find an iterable or string containing "online", return false
+      return false;
+    }
+
 
 
 }

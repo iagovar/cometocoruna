@@ -16,6 +16,11 @@
 # Ignoramos el output del template
 /calendar/template/calendar-output.html
 /calendar/template/img/
+
+# Ignoramos cualquier archivo de test que pueda haber
+/calendar/test.js
+/calendar/testing.js
+
 ###
 # Template para javascript VVVVV
 ###
