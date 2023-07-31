@@ -1,6 +1,8 @@
 const puppeteer = require('puppeteer');
 const { convert } = require('html-to-text');
 const { EventItem } = require('../../eventClass.js');
+const DatabaseConnection = require('../../databaseClass.js');
+const dateFns = require('date-fns');
 
 /**
  * Parses the Ataquilla DOM to scrape events and returns a list of event items.
@@ -67,6 +69,19 @@ async function parseAtaquillaDOM(entryPoint, maxPages) {
           console.error(`\n\nCouldn't retrieve title and link from a ${item.source} wrapper. Jumping to next event.\n${error}`);
           continue;
       }
+
+      // If the item has been in the database for less than 5 days, skip it
+      const myDatabase = new DatabaseConnection();
+      const dateInDB = await myDatabase.checkLinkInDB(item.link);
+      const today = new Date();
+      if (dateInDB != null) {
+        const howManyDays = dateFns.differenceInDays(today, dateInDB);
+        if (howManyDays < 5) {
+          console.log(`Item link already in DB for less than 5 days, skipping`);
+          continue;
+        }
+      }
+      
 
       // Navigating to item.link, where we'll get the rest of the event info
       try {
@@ -184,7 +199,7 @@ async function parseAtaquillaDOM(entryPoint, maxPages) {
 const entryPoint = 'https://entradas.ataquilla.com/ventaentradas/es/buscar?orderby=next_session&orderway=asc&search_query=Encuentra+tu+evento&search_city=A+Coru%C3%B1a&search_category=';
 const maxPages = 1;
 
-const scrapedItems = parseAtaquillaDOM(entryPoint, maxPages, uniqueProjectUUIDNamespace);
+const scrapedItems = parseAtaquillaDOM(entryPoint, maxPages);
 */
 
 module.exports = parseAtaquillaDOM;

@@ -22,6 +22,7 @@ function createDataBase(dbPath, schema, tableName) {
         endDateISO TEXT,
         initDateHuman TEXT,
         endDateHuman TEXT,
+        scrapedDateISO TEXT,
         content TEXT,
         image TEXT,
         source TEXT
@@ -62,6 +63,7 @@ function storeEventsInDB(myDatabase, schema, tableName, events) {
             '${singleEvent.endDateISO}',
             '${singleEvent.initDateHuman}',
             '${singleEvent.endDateHuman}',
+            '${singleEvent.scrapedDateISO}',
             '${singleEvent.content}',
             '${singleEvent.image}',
             '${singleEvent.source}'
@@ -108,7 +110,28 @@ function getEntriesInRange(myDatabase, schema, tableName, initDateISO, endDateIS
     });
 }
 
+/**
+ * Retrieves the scraped date from the specified table in the given database for a given link.
+ *
+ * @param {MyDatabase} myDatabase - The database connection object.
+ * @param {string} tableName - The name of the table to query.
+ * @param {string} linkToCheck - The link to search for in the table.
+ * @return {Promise<string|null>} A promise that resolves to the scraped date if the link is found, or null if not found.
+ */
+function checkLinkInDB(myDatabase, tableName, linkToCheck) {
+  const query = `SELECT scrapedDateISO FROM ${tableName} WHERE link = '${linkToCheck}'`;
 
+  return new Promise((resolve, reject) => {
+    myDatabase.get(query, (err, row) => {
+      if (err) {
+        reject(err); // An error occurred while querying the database
+      } else {
+        const scrapedDate = row ? row.scrapedDateISO : null; // Check if the link was found or not
+        resolve(scrapedDate);
+      }
+    });
+  });
+}
 /*
 
 async function test() {

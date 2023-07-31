@@ -11,6 +11,8 @@ List of groups comes from Main.js passed as entryPoints
 const puppeteer = require('puppeteer');
 const { convert } = require('html-to-text');
 const { EventItem } = require('../../eventClass.js');
+const DatabaseConnection = require('../../databaseClass.js');
+const dateFns = require('date-fns');
 
 
 
@@ -80,6 +82,18 @@ async function parseMeetupDOM(entryPoints, maxPages) {
             } catch (error) {
                 console.error(`\n\nCouldn't retrieve title and link from a ${item.source} wrapper \nJumping to next event: ${error}`);
                 continue;
+            }
+
+            // If the item has been in the database for less than 5 days, skip it
+            const myDatabase = new DatabaseConnection();
+            const dateInDB = await myDatabase.checkLinkInDB(item.link);
+            const today = new Date();
+            if (dateInDB != null) {
+                const howManyDays = dateFns.differenceInDays(today, dateInDB);
+                if (howManyDays < 5) {
+                console.log(`Item link already in DB for less than 5 days, skipping`);
+                continue;
+                }
             }
 
             // Navigating to item.link, where we'll get the rest of the event info

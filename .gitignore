@@ -18,8 +18,8 @@
 /calendar/template/img/
 
 # Ignoramos cualquier archivo de test que pueda haber
-/calendar/test.js
-/calendar/testing.js
+/calendar/test.*
+/calendar/testing.*
 
 ###
 # Template para javascript VVVVV

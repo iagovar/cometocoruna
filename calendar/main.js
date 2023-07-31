@@ -17,7 +17,7 @@ const parseEventBriteDOM = require('./dataSources/eventbrite/eventbrite-scraper.
 const parseQuincemilDom = require('./dataSources/quincemil/quincemil-scraper.js');
 
 // Other Local dependencies
-const db = require('./databaseOperations.js');
+const DatabaseConnection = require('./databaseClass.js');
 const eventClustering = require('./eventClustering.js');
 const uploadFileByFTP = require('./ftpOperations.js');
 const generateHTML = require('./templateOperations.js');
@@ -32,7 +32,7 @@ async function main() {
   const dbPath = './cometocoruna.sqlite3';
   const schema = 'main'; // Not necessary for SQLite, only DuckDB
   const tableName = 'events';
-  let myDatabase = db.createDataBase(dbPath, schema, tableName); // !! This fn defines the schema
+  let myDatabase = new DatabaseConnection(dbPath, tableName); // Schema hardcoded in this class
 
     // 1.1 Read authentication configurations
     const authConfig = JSON.parse(fs.readFileSync('./authentication.config.json', 'utf-8'));
@@ -68,7 +68,8 @@ async function main() {
         "https://www.meetup.com/gpul-labs/events/",
         "https://www.meetup.com/quedadas-coruna/events/",
         "https://www.meetup.com/a-coruna-cork-y-canvas-sessions/events/",
-        "https://www.meetup.com/wordpresscoruna/events/"
+        "https://www.meetup.com/wordpresscoruna/events/",
+        "https://www.meetup.com/a-coruna-stress-release-meetup-group/events/",
 
       ];
       const meetupMaxPages = 1; // No pagination implemented, not necessary for now
@@ -110,7 +111,7 @@ async function main() {
       );
 
   // 3. Store events in DB
-  await db.storeEventsInDB(myDatabase, schema, tableName, arrayOfAllEvents);
+  await myDatabase.storeEventsInDB(arrayOfAllEvents);
 
   // 4. Generating HTML file
 
@@ -121,7 +122,7 @@ async function main() {
     const initDateISO = dateFns.formatISO(initDateObj)
     const endDateISO = dateFns.formatISO(endDateObj)
 
-    const eventsToPrint = await db.getEntriesInRange(myDatabase, schema, tableName, initDateISO, endDateISO);
+    const eventsToPrint = await myDatabase.getEntriesInRange(initDateISO, endDateISO);
 
     // 4.2 Modify eventsToPrint to add new fields and structure
     // Event clustering also downloads and modifies images for each event.

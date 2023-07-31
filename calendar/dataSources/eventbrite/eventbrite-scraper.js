@@ -1,6 +1,8 @@
 const puppeteer = require('puppeteer');
 const { convert } = require('html-to-text');
 const { EventItem } = require('../../eventClass.js');
+const DatabaseConnection = require('../../databaseClass.js');
+const dateFns = require('date-fns');
 
 
 /**
@@ -79,6 +81,18 @@ async function parseEventBriteDOM(entryPoint, maxPages, user, password) {
         } catch (error) {
             console.error(`\n\nCouldn't retrieve title and link from a ${item.source} wrapper. Jumping to next event:\n${error}`);
             continue;
+        }
+
+        // If the item has been in the database for less than 5 days, skip it
+        const myDatabase = new DatabaseConnection();
+        const dateInDB = await myDatabase.checkLinkInDB(item.link);
+        const today = new Date();
+        if (dateInDB != null) {
+          const howManyDays = dateFns.differenceInDays(today, dateInDB);
+          if (howManyDays < 5) {
+            console.log(`Item link already in DB for less than 5 days, skipping`);
+            continue;
+          }
         }
 
         // Navigating to item.link, where we'll get the rest of the event info
@@ -187,12 +201,13 @@ async function parseEventBriteDOM(entryPoint, maxPages, user, password) {
 }
 
 
-/*
+
 const entryPoint = 'https://www.eventbrite.es/d/united-states/all-events/?page=1&bbox=-8.735923924902409%2C43.182572282775%2C-8.213386693457096%2C43.64991191572349';
 const maxPages = 1;
 
+const fs = require('fs');
 const authConfig = JSON.parse(fs.readFileSync('./authentication.config.json', 'utf-8'));
 const scrapedItems = parseEventBriteDOM(entryPoint, maxPages, authConfig.eventbrite.user, authConfig.eventbrite.password);
-*/
+
 
 module.exports = parseEventBriteDOM;

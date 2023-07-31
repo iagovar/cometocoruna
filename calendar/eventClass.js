@@ -1,6 +1,9 @@
 const crypto = require('crypto');
 const { parse, isValid, format, formatISO, parseISO } = require('date-fns');
 const { enUS } = require('date-fns/locale');
+const { convert } = require('html-to-text');
+const axios = require('axios');
+const fs = require('fs');
 
 /**
  * Class representing an Real Life Event.
@@ -170,7 +173,8 @@ class EventItem {
         str = String(str);
         // Replace simple ' with two consecutive single quotes
         const sanitizedStr = str.replace(/'/g, "''");
-        return sanitizedStr;
+        // Convert strips from any HTML tags
+        return convert(sanitizedStr);
     }
 
     
@@ -213,7 +217,34 @@ class EventItem {
       return false;
     }
 
-
+    static async downloadImage(url, imgLocalDestinationFolder) {
+      try {
+      // Make a request to fetch the image data
+      const response = await axios.get(url, { responseType: 'arraybuffer' });
+    
+      // Generate a unique filename based on milisecons since Jan 1 1970
+      const timestamp = Date.now();
+      const filename = `${timestamp}.jpg`;
+  
+      // Create the destination folder if it doesn't exist
+      if (!fs.existsSync(imgLocalDestinationFolder)) {
+      fs.mkdirSync(imgLocalDestinationFolder);
+      }
+  
+      // Specify the complete file path
+      const filePath = `${imgLocalDestinationFolder}${filename}`;
+  
+      // Write the image data to the specified file path
+      fs.writeFileSync(filePath, Buffer.from(response.data));
+  
+      // Return a resolved promise to indicate success & the filename
+      return filename;
+  
+      } catch (error) {
+          console.error(`Error downloading or writing event img. Returning null:\n${error}\n${url}`);
+          return null;
+      }
+    }
 
 }
 

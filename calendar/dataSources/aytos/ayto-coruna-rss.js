@@ -2,6 +2,8 @@ const Parser = require('rss-parser');
 const parser = new Parser();
 const { convert } = require('html-to-text');
 const { EventItem } = require('../../eventClass.js');
+const DatabaseConnection = require('../../databaseClass.js');
+const dateFns = require('date-fns');
 
 const cheerio = require('cheerio');
 const axios = require('axios');
@@ -36,6 +38,18 @@ async function parseAytoCorunaFeed(url) {
       } catch (error) {
           console.error(`\n\nSkipping: Failed locating title and link in aytoCoruna item:\n${error}`);
           continue;
+      }
+
+      // If the item has been in the database for less than 5 days, skip it
+      const myDatabase = new DatabaseConnection();
+      const dateInDB = await myDatabase.checkLinkInDB(item.link);
+      const today = new Date();
+      if (dateInDB != null) {
+        const howManyDays = dateFns.differenceInDays(today, dateInDB);
+        if (howManyDays < 5) {
+          console.log(`Item link already in DB for less than 5 days, skipping`);
+          continue;
+        }
       }
 
       // Getting the link HTML as we need it to parse dates, that arse not provided

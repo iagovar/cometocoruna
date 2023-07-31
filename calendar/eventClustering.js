@@ -1,6 +1,7 @@
 const { add, format, startOfDay, endOfDay } = require('date-fns');
 const axios = require('axios');
 const fs = require('fs');
+const { EventItem } = require('./eventClass');
 
 async function eventClustering(events, numDays, imgLocalDestinationFolder, imgRemoteFolderURL) {
     // 1. Generate cluster bins given the numDays
@@ -56,7 +57,7 @@ async function eventClustering(events, numDays, imgLocalDestinationFolder, imgRe
             // by reference, we need to check if it has already been downloaded.
             // So any image url starting by imgRemoteFolderURL is left as is.
             if (!event.image.startsWith(imgRemoteFolderURL)) {
-                imgLocalFileName = await downloadImage(event.image, imgLocalDestinationFolder);
+                imgLocalFileName = await EventItem.downloadImage(event.image, imgLocalDestinationFolder);
                 // If the image downloaded successfully, then change event.url
                 if (imgLocalFileName != null) {event.image = imgRemoteFolderURL + imgLocalFileName;}
                 }
@@ -101,35 +102,6 @@ function generateClusters(numDays) {
     }
 
     return clusterList;
-}
-
-async function downloadImage(url, imgLocalDestinationFolder) {
-    try {
-    // Make a request to fetch the image data
-    const response = await axios.get(url, { responseType: 'arraybuffer' });
-  
-    // Generate a unique filename based on milisecons since Jan 1 1970
-    const timestamp = Date.now();
-    const filename = `${timestamp}.jpg`;
-
-    // Create the destination folder if it doesn't exist
-    if (!fs.existsSync(imgLocalDestinationFolder)) {
-    fs.mkdirSync(imgLocalDestinationFolder);
-    }
-
-    // Specify the complete file path
-    const filePath = `${imgLocalDestinationFolder}${filename}`;
-
-    // Write the image data to the specified file path
-    fs.writeFileSync(filePath, Buffer.from(response.data));
-
-    // Return a resolved promise to indicate success & the filename
-    return filename;
-
-    } catch (error) {
-        console.error(`Error downloading or writing event img. Returning null:\n${error}\n${url}`);
-        return null;
-    }
 }
 
 module.exports = eventClustering
