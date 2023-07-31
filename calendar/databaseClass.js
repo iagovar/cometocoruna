@@ -167,10 +167,14 @@ class DatabaseConnection {
             reject(err); // An error occurred while querying the database
             } else {
             
-            // If the link was found, return the scraped date, otherwise return null
-            const jsDate = new Date(row.scrapedDateISO);
-            const scrapedDate = row ? jsDate : null;
-            resolve(scrapedDate);
+            try {
+                // If the link was found, return the scraped date, otherwise return null
+                const jsDate = new Date(row.scrapedDateISO);
+                const scrapedDate = row ? jsDate : null;
+                resolve(scrapedDate);
+            } catch (error) {
+                resolve(null);
+            }
             }
         });
         });
