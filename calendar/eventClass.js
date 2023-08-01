@@ -189,6 +189,12 @@ class EventItem {
         return urlHash;
     }
 
+    //------------------------------------------------------------------------//
+    //                                                                        //
+    // STATIC METHODS                                                         //
+    //                                                                        //
+    //------------------------------------------------------------------------//
+
     /**
      * Checks if the given object or any of its nested objects or arrays contain the string "online".
      *
@@ -216,6 +222,53 @@ class EventItem {
       // If we cant find an iterable or string containing "online", return false
       return false;
     }
+
+    /**
+     * Check for title duplicates in an array of events and return the unique events.
+     * Based on hard-coded scores for every source.
+     * 
+     * It is expected to call it on day-cluster basis.
+     *
+     * @param {Array} arrayOfEvents - An array of events to check for duplicates.
+     * @return {Array} - An array containing only the unique events.
+     */
+    static checkForDuplicates(arrayOfEvents) {
+      let scores = {
+        aytoCoruna  : 1,
+        meetup      : 1,
+        ataquilla   : 3,
+        eventbrite  : 3,
+        quincemil   : 2,
+      }; // JS object with each dataSource score
+
+      
+      // is there any event with the same title?
+      // If it is and it doesn't score higher, event.isValid = false;
+      // If they have the same score, keep both valid.
+      for (const thisEvent of arrayOfEvents) {
+        thisEvent.isValid = true;
+        for (const iterator of arrayOfEvents) {
+          const isDuplicated = thisEvent.title === iterator.title && thisEvent.source !== iterator.source;
+          if (isDuplicated) {
+            const thisEventScore = scores[thisEvent.source];
+            const iteratorScore = scores[iterator.source];
+            thisEvent.isValid = thisEventScore >= iteratorScore ? true : false;
+          }
+        }
+      }
+
+      // return only the valid events
+      let filteredArray = [];
+      for (const event of arrayOfEvents) {
+        if (event.isValid) {
+          filteredArray.push(event);
+        }
+      }
+
+      return filteredArray;
+
+    }
+    
 
     static async downloadImage(url, imgLocalDestinationFolder) {
       try {

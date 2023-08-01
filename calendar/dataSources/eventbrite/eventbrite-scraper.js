@@ -90,7 +90,7 @@ async function parseEventBriteDOM(entryPoint, maxPages, user, password) {
         if (dateInDB != null) {
           const howManyDays = dateFns.differenceInDays(today, dateInDB);
           if (howManyDays < 5) {
-            console.log(`Item link already in DB for less than 5 days, skipping`);
+            console.log(`\nItem link already in DB for less than 5 days, skipping:\n${item.link}`);
             continue;
           }
         }

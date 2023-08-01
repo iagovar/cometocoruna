@@ -3,7 +3,7 @@
 Event orchestrator for all events.
 
 1. Fetch events by calling different scripts responsible for each source.
-2. Store the events in a DuckDB database.
+2. Store the events in a SQLite database.
 3. Generate an HTML file with events for the current day + the next 10 days.
 4. Upload the file via FTP to the cometocoruna.com server.
 

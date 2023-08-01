@@ -37,6 +37,9 @@ async function eventClustering(events, numDays, imgLocalDestinationFolder, imgRe
 
             cluster.dayEvents.push(event);
         }
+
+        // Check for ~duplicates and remove em from the cluster
+        cluster.dayEvents = EventItem.checkForDuplicates(cluster.dayEvents);
     }
 
     // 3. For every event, download the image to imgLocalDestinationFolder
