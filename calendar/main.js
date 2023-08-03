@@ -15,6 +15,7 @@ const parseAtaquillaDOM = require('./dataSources/ataquilla/ataquilla-scraper.js'
 const parseMeetupDOM = require('./dataSources/meetup/meetup-scraper.js');
 const parseEventBriteDOM = require('./dataSources/eventbrite/eventbrite-scraper.js');
 const parseQuincemilDom = require('./dataSources/quincemil/quincemil-scraper.js');
+const parsePencilAndFork = require('./dataSources/momAndPop/pencil-and-fork-scraper.js');
 
 // Other Local dependencies
 const DatabaseConnection = require('./databaseClass.js');
@@ -85,19 +86,27 @@ async function main() {
       const quincemilMaxPages = 1;
       const quincemilEventsPromise = parseQuincemilDom(quincemilEntryPoint, quincemilMaxPages);
 
+      // MOM & POP SHOPS
+      // 2.2.6 Pencil & Fork
+      const pencilAndForkURL = 'https://pencilandfork.es/cursos-y-talleres/';
+      const pencilAndForkEventsPromise = parsePencilAndFork(pencilAndForkURL);
+
+
 
     const [
       aytoEventsArray,
       ataquillaEventsArray,
       meetupEventsArray,
       eventbriteEventsArray,
-      quincemilEventsArray
+      quincemilEventsArray,
+      pencilAndForkArray
     ] = await Promise.all([
       aytoEventsPromise,
       ataquillaEventsPromise,
       meetupEventsPromise,
       eventbriteEventsPromise,
-      quincemilEventsPromise
+      quincemilEventsPromise,
+      pencilAndForkEventsPromise
     ]);
 
     // 2.3 Aggregate events from every source

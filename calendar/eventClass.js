@@ -69,9 +69,15 @@ class EventItem {
 
       switch (sanitizedPrice) {
         case "":
-        case "0.00":                    
+        case "0.00":
+        case "0":
         case 0:
         case 0.00:
+        case "De balde":
+        case "De Balde":
+        case "de balde":
+        case "Gratis":
+        case "gratis":
             finalPrice = "Free or unavailable";
             break;
     
