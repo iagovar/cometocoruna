@@ -4,16 +4,20 @@
   "description": "RSS & API orchestrator, retrieving info, storing in DB and exporting HTML through FTP.",
   "main": "main.js",
   "dependencies": {
+    "@azure/cognitiveservices-computervision": "^8.2.0",
+    "@azure/ms-rest-azure-js": "^2.1.0",
+    "apify-client": "^2.7.1",
     "axios": "^1.4.0",
     "cheerio": "^1.0.0-rc.12",
     "date-fns": "^2.30.0",
-    "sqlite3": "^5.1.6",
     "fs": "^0.0.1-security",
     "ftp": "^0.3.10",
     "handlebars": "^4.7.7",
     "html-to-text": "^9.0.5",
+    "openai": "^3.3.0",
     "puppeteer": "^20.7.4",
-    "rss-parser": "^3.13.0"
+    "rss-to-json": "^2.1.1",
+    "sqlite3": "^5.1.6"
   },
   "scripts": {
     "start": "node main.js",

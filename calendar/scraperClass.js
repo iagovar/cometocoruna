@@ -64,11 +64,17 @@ class AbstractDomScraper {
      * and returning the login page.
      *
      * @param {string} loginUrl - The URL of the login page.
-     * @param {object} userPassInputSelectorsObj - An object containing the selectors for the username and password inputs.
+     * @param {object} userPassInputSelectorsObj - An object containing the selectors for the username and password inputs. It will look for .user, .password and .submit objects.
      * @param {number} [secondsToWait=5] - The number of seconds to wait before performing the login. Defaults to 5 seconds.
+     * @param {Function} [callback=undefined] - Optional callback async function. Could be accepting coockies, for example. Will get this.loginPage and 'before'||'after' as parameters, indicating if it's called before or after login.
      * @return {Promise<Page>} - A Promise that resolves to the login page.
      */
-    async login(loginUrl, userPassSelectorsObj, secondsToWait = 5) {
+    async login(
+        loginUrl,
+        userPassSelectorsObj,
+        secondsToWait = 5,
+        callback = undefined // Empty callback as default
+        ) {
         if (this.library == 'puppeteer') {
             // Loading a new tab and going to url
             this.loginPage = await this.browser.newPage();
@@ -76,7 +82,7 @@ class AbstractDomScraper {
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36'
             );
             await this.loginPage.setJavaScriptEnabled(true);
-            await this.loginPage.setViewport({width: 1080, height: 1024});
+            await this.loginPage.setViewport({width: 1920, height: 1080});
             await this.loginPage.goto(loginUrl);
 
             // Wait a random number of seconds based on secondsToWait seed
@@ -84,11 +90,22 @@ class AbstractDomScraper {
                 await AbstractDomScraper.waitSomeSeconds(secondsToWait-1, secondsToWait+1);
             }
 
+            // performing optional callback
+            if (typeof callback === 'function') {
+                await callback(this.loginPage, 'before');
+            }
+
+            // Performing user & pass input and submit
             await this.loginPage.click(userPassSelectorsObj.user);
             await this.loginPage.type(userPassSelectorsObj.user, this.authConfig.user);
             await this.loginPage.click(userPassSelectorsObj.password);
             await this.loginPage.type(userPassSelectorsObj.password, this.authConfig.password);
             await this.loginPage.click(userPassSelectorsObj.submit);
+
+            // performing optional callback
+            if (typeof callback === 'function') {
+                await callback(this.loginPage, 'after');
+            }
 
             // Return, in case we want to apply something else to loginPage
             return this.loginPage;

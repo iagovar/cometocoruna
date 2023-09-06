@@ -1,5 +1,5 @@
-const Parser = require('rss-parser');
-const parser = new Parser();
+/* const Parser = require('rss-parser'); */
+const { parse } = require('rss-to-json');
 const { convert } = require('html-to-text');
 const { EventItem } = require('../../eventClass.js');
 const DatabaseConnection = require('../../databaseClass.js');
@@ -19,7 +19,11 @@ async function parseAytoCorunaFeed(url) {
     // Trying to download the feed
     let feed = null;
     try {
-        feed = await parser.parseURL(url);
+        /* const parser = new Parser({
+          defaultRSS: 2.0
+        });
+        feed = await parser.parseURL(url); */
+        feed = await parse(url);
     } catch (error) {
         console.error(`\n\nError parsing feed. Returning and empty array. \n${error}`);
         return [];
@@ -76,7 +80,7 @@ async function parseAytoCorunaFeed(url) {
 
       // Extracting image url from the feed xml
       try {
-          item.image = singleEvent['itunes']['image']
+          item.image = singleEvent.media.thumbnail["media:thumbnail"].url
       } catch (error) {
           console.error(`\n\nFailed to obtain image in ${item.link}, setting a default one:\n${error}`);
           item.image = "https://i.imgur.com/2rzELfg.jpg"; // Logo aytocoruna
@@ -85,7 +89,7 @@ async function parseAytoCorunaFeed(url) {
       // Going after the content
       try {
         // Convert() strips of html tags
-        item.content = singleEvent.content;
+        item.content = singleEvent.description;
       } catch (error) {
         console.error(`\n\nFailed to obtain description in ${item.link}, setting description to '':\n${error}`);
         item.content = "";
@@ -119,10 +123,10 @@ async function parseAytoCorunaFeed(url) {
     return listOfEvents;
 }
 
-/*
+
 const aytoURL = "https://www.coruna.gal/web/es/rss/ociocultura";
-const aytoEventsPromise= parseAytoFeed(aytoURL);
-*/
+const aytoEventsPromise= parseAytoCorunaFeed(aytoURL);
+
 
 // Exportamos el módulo
 module.exports = parseAytoCorunaFeed;

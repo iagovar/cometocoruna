@@ -4,7 +4,7 @@
     {{#if dayEvents.length}}
         {{#each dayEvents}}
             <div class="event {{source}}">
-                <div class="image"><img src="{{image}}" alt="{{title}}"></div>
+                <div class="image"><img src="{{image}}" loading="lazy" alt="{{title}}"></div>
                 <div class="content">
                     <h2 class="title">{{title}}</h2>
                     <p class="humanDate"><strong>Date:</strong> From {{initDateHuman}} to {{endDateHuman}}</p>

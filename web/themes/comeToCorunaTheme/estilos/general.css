@@ -18,6 +18,7 @@ https://coolors.co/eac435-345995-03cea4-fb4d3d-ca1551
 	--border-radius: 8px;
 	--medium-grey-bg: #EBEBEB;
 	--dark-grey-bg: #B8B8B8;
+
 }
 
 body {
@@ -34,6 +35,7 @@ header {
 	font-weight: bold;
 	position: sticky;
 	top: 0;
+	z-index: 999;
 }
 
 header a,
@@ -127,6 +129,9 @@ footer {
 	font-size: 1.8em;
 	display: flex;
 	flex-direction: row;
+	position: sticky;
+	top: 1.2em;
+	background-color: white;
 }
 
 .calendar .no-events,
@@ -156,9 +161,8 @@ footer {
 }
 
 .event .description {
+	display: none;
 	font-size: 0.9em;
-	max-height: 25vh;
-	overflow: hidden;
 }
 
 .event img {

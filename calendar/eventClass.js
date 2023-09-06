@@ -22,7 +22,7 @@ class EventItem {
      * @param {string|number|Date} initDate - The start date of the event.
      * @param {string|number|Date} endDate - The end date of the event.
      */
-    constructor(title, link, price, content, image, source, initDate, endDate) {
+    constructor(title, link, price, content, image, source, initDate, endDate, location = "") {
         this.title = this.sanitizeStringForDuckDB(title);
         this.link = link;
         this.price = this.setPrice(price);
@@ -39,7 +39,7 @@ class EventItem {
         this.endDateHuman = this.convertISODateToHumanReadable(this.endDateISO);
         this.scrapedDateISO = formatISO(new Date());
 
-        this.hash = this.createHash(this.link);
+        this.location = location;
 
         // All invalid events will be discarded before submitting to DB
         this.isValidEvent = true;

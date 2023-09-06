@@ -40,7 +40,7 @@ class DatabaseConnection {
       this.db = new sqlite3.Database(this.dbPath);
 
       const query = `CREATE TABLE ${this.tableName} (
-        link TEXT PRIMARY KEY,
+        link TEXT,
         title TEXT,
         price TEXT,
         initDateISO TEXT,
@@ -50,7 +50,8 @@ class DatabaseConnection {
         scrapedDateISO TEXT,
         content TEXT,
         image TEXT,
-        source TEXT
+        source TEXT,
+        PRIMARY KEY (link, initDateISO)
       )`;
 
       this.db.run(query);

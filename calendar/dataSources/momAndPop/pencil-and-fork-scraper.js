@@ -4,13 +4,13 @@ const puppeteer = require('puppeteer');
 const { convert } = require('html-to-text');
 
 
-async function parsePencilAndFork(url) {
+async function parsePencilAndFork(url, authConfigObj) {
 
     // Loading class
     let PencilAndFork = new AbstractDomScraper(
         url,
         0, // no max pages required
-        null, // No auth config required
+        authConfigObj,
         'puppeteer' // library we'll use
     )
 

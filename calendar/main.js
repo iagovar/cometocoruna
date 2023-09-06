@@ -16,6 +16,7 @@ const parseMeetupDOM = require('./dataSources/meetup/meetup-scraper.js');
 const parseEventBriteDOM = require('./dataSources/eventbrite/eventbrite-scraper.js');
 const parseQuincemilDom = require('./dataSources/quincemil/quincemil-scraper.js');
 const parsePencilAndFork = require('./dataSources/momAndPop/pencil-and-fork-scraper.js');
+const { parseInstagramApify } = require('./dataSources/instagram/instagram-scraper.js');
 
 // Other Local dependencies
 const DatabaseConnection = require('./databaseClass.js');
@@ -29,6 +30,8 @@ const dateFns = require('date-fns');
 
 
 async function main() {
+  console.log("============ RUNNING SCRIPT ON " + new Date().toLocaleString() + " ============");
+
   // 1. Create db if it doesn't exist
   const dbPath = './cometocoruna.sqlite3';
   const schema = 'main'; // Not necessary for SQLite, only DuckDB
@@ -91,6 +94,17 @@ async function main() {
       const pencilAndForkURL = 'https://pencilandfork.es/cursos-y-talleres/';
       const pencilAndForkEventsPromise = parsePencilAndFork(pencilAndForkURL);
 
+      // 2.2.7 Instagram accounts
+      const instagramAccounts = [
+        "https://www.instagram.com/ateneobarcultural/",
+        "https://www.instagram.com/acefala.colectivo/",
+        "https://www.instagram.com/galeriagreleria/"
+      ]
+
+      const ForceInstagram = false;
+      
+      const instagramEventsPromise = parseInstagramApify(instagramAccounts, authConfig.apify, ForceInstagram);
+      
 
 
     const [
@@ -99,14 +113,16 @@ async function main() {
       meetupEventsArray,
       eventbriteEventsArray,
       quincemilEventsArray,
-      pencilAndForkArray
+      pencilAndForkArray,
+      instagramEventsArray
     ] = await Promise.all([
       aytoEventsPromise,
       ataquillaEventsPromise,
       meetupEventsPromise,
       eventbriteEventsPromise,
       quincemilEventsPromise,
-      pencilAndForkEventsPromise
+      pencilAndForkEventsPromise,
+      instagramEventsPromise
     ]);
 
     // 2.3 Aggregate events from every source
@@ -116,7 +132,9 @@ async function main() {
       ...meetupEventsArray,
       ...ataquillaEventsArray,
       ...eventbriteEventsArray,
-      ...quincemilEventsArray
+      ...quincemilEventsArray,
+      ...pencilAndForkArray,
+      ...instagramEventsArray
       );
 
   // 3. Store events in DB
@@ -126,6 +144,7 @@ async function main() {
 
     // 4.1 Retrieve events from DB from past 10 days and next 10 days
     const numDays = 10;
+    
     const initDateObj = dateFns.sub(dateFns.startOfDay(new Date()), { days: numDays })
     const endDateObj = dateFns.add(dateFns.startOfDay(new Date()), { days: numDays })
     const initDateISO = dateFns.formatISO(initDateObj)
@@ -164,6 +183,33 @@ async function main() {
 
   // closing database connection
   myDatabase.close();
+
+  // HOTFIX Closing all chrome instances on system
+  /* made because apparently broser.close() is not really closing chrome instances
+     and seems to be causing lots of timeouts down the road for reasons I wasn't
+     able to track within two hours.
+
+     Don't have more time for this bug now.
+
+     The script failed after a couple of days leaving most get requestions on
+     timeout, but worked after a reboot of the server.
+
+     The glances tools shows chorome instances on the system when they should be
+     closed, so I assume this is what is causing the problem.
+
+     We'll see.
+  */
+  const { exec } = require('child_process');
+
+  try {
+    exec('pkill chrome', (error, stdout, stderr) => {
+      // pkill chrome command executed successfully
+      console.log(`pkill chrome command executed successfully, stdout: ${stdout}`);
+    });
+  } catch (error) {
+    console.error(`Error executing pkill chrome: ${error.message}`);
+  }
+
 }
 
 main();
