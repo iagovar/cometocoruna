@@ -21,6 +21,11 @@
 /calendar/test.*
 /calendar/testing.*
 
+# Ignore the laragon folder
+
+/laragon/
+/laragon/*
+
 ###
 # Template para javascript VVVVV
 ###
