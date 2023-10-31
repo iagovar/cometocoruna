@@ -34,8 +34,16 @@ async function parsePencilAndFork(url, authConfigObj) {
 
     // Parsing all events data
     for (const singleEvent of eventsData) {
-        const prices = singleEvent.offers.map(offer => parseFloat(offer.price));
-        const priceRangeString = `From ${Math.min(...prices).toFixed(2)}€ to ${Math.max(...prices).toFixed(2)}€`;
+        
+        let prices;
+        let priceRangeString;
+
+        if (Array.isArray(singleEvent.offers)) {
+            prices = singleEvent.offers.map(offer => parseFloat(offer.price));
+            priceRangeString = `From ${Math.min(...prices).toFixed(2)}€ to ${Math.max(...prices).toFixed(2)}€`;
+        } else {
+            priceRangeString = `No price available`;
+        }
 
         const tempEvent = new EventItem(
             singleEvent.name,

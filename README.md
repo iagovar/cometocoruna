@@ -39,7 +39,7 @@ Project structure:
 
 	````
 	# Run the cometocoruna.com calendar every day on 6AM
-	0 6 * * * cd ~/cometocoruna/calendar/ && npm start > debug.log 2>&1
+	0 6 * * * cd ~/cometocoruna/calendar/ && npm start >> debug.log 2>&1
 
 	````
 
