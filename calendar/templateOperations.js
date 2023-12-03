@@ -8,10 +8,27 @@ const { format } = require('date-fns');
  * @param {Array} arrayOfObjects - The array of objects containing the data for the HTML generation.
  * @param {string} templateSourceString - The path to the HTML template file.
  * @param {string} templateOutputString - The path to save the generated HTML file.
+ * @param {boolean} debugWithoutUploading - If true, the generated HTML file will use local image paths.
  * @return {Promise} A promise that resolves when the HTML file is generated successfully, or rejects with an error.
  */
-function generateHTML(arrayOfObjects, templateSourceString, templateOutputString) {
+function generateHTML(arrayOfObjects, templateSourceString, templateOutputString, debugWithoutUploading) {
     return new Promise((resolve, reject) => {
+
+      // If debugWithoutUploading is true, use local image paths
+      let modifiedEvent;
+      if (debugWithoutUploading) {
+        try {
+          for (const day of arrayOfObjects) {
+            for (const event of day.dayEvents) {
+              modifiedEvent = event;
+              event.image = '.' + event.localImageLocation;
+            }
+          }
+        } catch (error) {
+          console.error(`Error setting local img path: ${error}\n\n${JSON.stringify(modifiedEvent)}`);
+        }
+      }
+
       // Read the HTML template file
       const templateSourceObj = fs.readFileSync(templateSourceString, 'utf-8');
   

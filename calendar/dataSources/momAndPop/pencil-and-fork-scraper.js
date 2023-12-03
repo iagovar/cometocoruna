@@ -30,6 +30,7 @@ async function parsePencilAndFork(url, authConfigObj) {
         eventsData = JSON.parse(scriptContent);
     } catch (error) {
         console.error(`\n\nSkipping Pencil And Fork: Error retrieving JSON from ${url} \n${error}`);
+        return [];
     }
 
     // Parsing all events data

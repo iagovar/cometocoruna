@@ -101,6 +101,14 @@ async function parseInstagramDom(arrayOfAccounts, authConfigObj) {
 }
 
 
+/**
+ * Parses Instagram data using Apify API.
+ *
+ * @param {Array} arrayOfAccounts - An array of Instagram account URLs.
+ * @param {Object} authConfigObj - An object containing authentication configuration.
+ * @param {boolean} [force=false] - Flag indicating whether to force the function execution even if it's not Wednesday.
+ * @return {Array} An array of parsed Instagram data.
+ */
 async function parseInstagramApify(arrayOfAccounts, authConfigObj, force = false) {
     // Only run every wednesday (unless forced)
     const today = new Date();

@@ -4,7 +4,7 @@ const fs = require('fs');
 const { EventItem } = require('./eventClass');
 
 async function eventClustering(events, numDays, imgLocalDestinationFolder, imgRemoteFolderURL) {
-    // 1. Generate cluster bins given the numDays
+    // 1. Generate cluster bins given the numDays (just bins, without events binned)
     const clusterList = generateClusters(numDays);
 
     // 2. For every cluster, we loop though the events and add them to the cluster.
@@ -37,9 +37,6 @@ async function eventClustering(events, numDays, imgLocalDestinationFolder, imgRe
 
             cluster.dayEvents.push(event);
         }
-
-        // Check for ~duplicates and remove em from the cluster
-        cluster.dayEvents = EventItem.checkForDuplicates(cluster.dayEvents);
     }
 
     // 3. For every event, download the image to imgLocalDestinationFolder
@@ -48,26 +45,47 @@ async function eventClustering(events, numDays, imgLocalDestinationFolder, imgRe
 
     // Delete all images from imgLocalDestinationFolder folder first
     try {
-        fs.rmSync(imgLocalDestinationFolder, { recursive: true, force: true });
-      } catch (error) {
+        fs.rmSync(imgLocalDestinationFolder, { recursive: true, force: true });      
+        } catch (error) {
         console.error(error);
     }
 
     // Download all images and set new image url
     for (const cluster of clusterList) {
         for (const event of cluster.dayEvents) {
-            // Because the same event may be clustered multiple times, and passed
-            // by reference, we need to check if it has already been downloaded.
-            // So any image url starting by imgRemoteFolderURL is left as is.
-            if (!event.image.startsWith(imgRemoteFolderURL)) {
-                imgLocalFileName = await EventItem.downloadImage(event.image, imgLocalDestinationFolder);
+            /*
+                The same event may appear in different day-clusters. This means the image may alreay have been downloaded.
+
+                We need to:
+
+                1. Check if the event.image already starts by imgRemoteFolderURL (https://cometocoruna.com/assets/calendar/img/ bla bla).
+
+                If no criteria is met, then we download the image and asign it to the event.image property.
+
+            */
+            try {
+                if (event.image.startsWith(imgRemoteFolderURL)) {continue;}
+
+                // No prior criteria is met, we download the image
+                let imgLocalFileName = await EventItem.downloadImage(event.image, imgLocalDestinationFolder);
                 // If the image downloaded successfully, then change event.url
-                if (imgLocalFileName != null) {event.image = imgRemoteFolderURL + imgLocalFileName;}
+                if (imgLocalFileName != null) {
+                    event.image = imgRemoteFolderURL + imgLocalFileName;
+                    event.localImageLocation = `${imgLocalDestinationFolder}${imgLocalFileName}`; // For Resemblejs
                 }
+
+            } catch (error) {
+                console.error(`${error}\n\n${event}`);
+            }
         }
     }
 
-    // 4. All modifications are done, returning the clustered events
+    // 4. Check for ~duplicates and remove em from the cluster
+    for (const cluster of clusterList) {
+        cluster.dayEvents = await EventItem.checkForDuplicates(cluster.dayEvents);
+    }
+
+    // 5. All modifications are done, returning the clustered events
     return clusterList;
 }
 

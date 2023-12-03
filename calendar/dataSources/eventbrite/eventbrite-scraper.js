@@ -201,13 +201,13 @@ async function parseEventBriteDOM(entryPoint, maxPages, user, password) {
 }
 
 
-
+/*
 const entryPoint = 'https://www.eventbrite.es/d/united-states/all-events/?page=1&bbox=-8.735923924902409%2C43.182572282775%2C-8.213386693457096%2C43.64991191572349';
 const maxPages = 1;
 
 const fs = require('fs');
 const authConfig = JSON.parse(fs.readFileSync('./authentication.config.json', 'utf-8'));
 const scrapedItems = parseEventBriteDOM(entryPoint, maxPages, authConfig.eventbrite.user, authConfig.eventbrite.password);
-
+*/
 
 module.exports = parseEventBriteDOM;

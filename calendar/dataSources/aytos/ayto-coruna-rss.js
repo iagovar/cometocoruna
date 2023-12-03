@@ -123,10 +123,10 @@ async function parseAytoCorunaFeed(url) {
     return listOfEvents;
 }
 
-
+/*
 const aytoURL = "https://www.coruna.gal/web/es/rss/ociocultura";
 const aytoEventsPromise= parseAytoCorunaFeed(aytoURL);
-
+*/
 
 // Exportamos el módulo
 module.exports = parseAytoCorunaFeed;

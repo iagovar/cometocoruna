@@ -4,6 +4,9 @@ const { enUS } = require('date-fns/locale');
 const { convert } = require('html-to-text');
 const axios = require('axios');
 const fs = require('fs');
+const { distance } = require('fastest-levenshtein');
+const compareImages = require('resemblejs/compareImages');
+const webp = require('@namesmt/webp-converter');
 
 /**
  * Class representing an Real Life Event.
@@ -230,60 +233,220 @@ class EventItem {
     }
 
     /**
-     * Check for title duplicates in an array of events and return the unique events.
-     * Based on hard-coded scores for every source.
-     * 
-     * It is expected to call it on day-cluster basis.
+     * Checks for duplicates in an array of events and returns a filtered array of valid events.
      *
-     * @param {Array} arrayOfEvents - An array of events to check for duplicates.
-     * @return {Array} - An array containing only the unique events.
+     * This function iterates through the array of events and checks for duplicates based on the title, levenshtein distance, and image similarity.
+     * 
+     * It labels each event as duplicated or not and builds clusters of duplicates.
+     * 
+     * It then scores the events in each cluster and filters out the events with lower scores, keeping only one event with the highest score from each cluster (If multiple events have the same score, it keeps the first).
+     * 
+     * IT MAY PRODUCE FALSE POSITIVES, specially the image comparison. I'm trying hard to not use LLM APIs.
+     * 
+     * YOU SHOULDN'T PUSH EVENTS ON DIFFERENT DAYS, because it will lable repeating events as duplicates.
+     * 
+     * @param {Array} arrayOfEvents - The array of events to check for duplicates (SAME DAY!!).
+     * @return {Array} The filtered array of events without duplicates.
      */
-    static checkForDuplicates(arrayOfEvents) {
+    static async checkForDuplicates(arrayOfEvents) {
       let scores = {
         aytoCoruna  : 1,
-        meetup      : 1,
-        ataquilla   : 3,
-        eventbrite  : 3,
-        quincemil   : 2,
+        meetup      : 2,
+        quincemil   : 3,
+        eventbrite  : 4,
+        ataquilla   : 5,
       }; // JS object with each dataSource score
 
-      
-      // is there any event with the same title?
-      // If it is and it doesn't score higher, event.isValid = false;
-      // If they have the same score, keep both valid.
+      // Build some flags for handling duplicates
       for (const thisEvent of arrayOfEvents) {
-        thisEvent.isValid = true;
-        for (const iterator of arrayOfEvents) {
-          const isDuplicated = thisEvent.title === iterator.title && thisEvent.source !== iterator.source;
-          if (isDuplicated) {
-            const thisEventScore = scores[thisEvent.source];
-            const iteratorScore = scores[iterator.source];
-            thisEvent.isValid = thisEventScore >= iteratorScore ? true : false;
+        thisEvent.isDuplicated = false;
+      }
+
+
+      //////////////////////////////////////////////////////////////////////
+      // Checking for duplicates
+      //
+      // clustersOfDuplicates = [
+      //  [Event 1, Event 2],
+      //  [Event 3, Event 4],
+      //  [Event 5, Event 6]
+      // ]
+      //
+      //////////////////////////////////////////////////////////////////////
+
+      let clustersOfDuplicates = [];
+
+      for (const leftEvent of arrayOfEvents) {
+
+        let thisEventDuplicates = [];
+
+        // If the event has already been labelled as duplicate, skip it
+        if (leftEvent.isDuplicated == false) {
+          thisEventDuplicates.push(leftEvent);
+          clustersOfDuplicates.push(thisEventDuplicates);
+        } else {
+          continue;
+        }
+
+        for (const rightEvent of arrayOfEvents) {
+
+          // Avoid checking against itself
+          if (rightEvent.link != leftEvent.link) {
+
+            // Check if the titles are the same
+            const hasTheSameTitle = leftEvent.title == rightEvent.title;
+            if (hasTheSameTitle) {
+              leftEvent.isDuplicated = true;
+              rightEvent.isDuplicated = true;
+              leftEvent.isDuplicatedBy = 'same title';
+              rightEvent.isDuplicatedBy = 'same title';
+              thisEventDuplicates.push(rightEvent);
+              continue;
+            }
+
+
+            // Consider duplicated if levenshtein distance =<20% of the average length
+            const rightLength = rightEvent.title.length;
+            const leftLength = leftEvent.title.length;
+            const averageLength = (rightLength + leftLength) / 2;
+            const levenshteinDistance = distance(leftEvent.title, rightEvent.title);
+
+            if (levenshteinDistance <= averageLength * 0.2) {
+              leftEvent.isDuplicated = true;
+              rightEvent.isDuplicated = true;
+              leftEvent.isDuplicatedBy = 'levenshtein distance';
+              rightEvent.isDuplicatedBy = 'levenshtein distance';
+              thisEventDuplicates.push(rightEvent);
+              continue;              
+            }
+
+            // Check image similarity with resemblejs. Consider same image if mismatch score < 75.
+            // I came up with this score with some manual testing with sample images.
+            let imageMisMathScore;
+            let leftEventLocalImage = leftEvent.localImageLocation;
+            let rightEventLocalImage = rightEvent.localImageLocation;
+
+            // For image similarity, same source is likely to produce false positives, skip if same source
+            const sameSource = leftEvent.source == rightEvent.source;
+            if (sameSource) {continue;}
+
+            try {    
+              const options = {
+                scaleToSameSize: true,
+                ignore: 'alpha',
+              }   
+              imageMisMathScore = (await compareImages(leftEventLocalImage, rightEventLocalImage, options)).rawMisMatchPercentage;
+            } catch (error) {
+              console.error(`\nError comparing event images: ${error}\n Images: ${leftEventLocalImage} and ${rightEventLocalImage}`);
+              imageMisMathScore = 100;
+            }
+
+            if (imageMisMathScore < 75) {
+              leftEvent.isDuplicated = true;
+              rightEvent.isDuplicated = true;
+              leftEvent.isDuplicatedBy = 'image similarity';
+              rightEvent.isDuplicatedBy = 'image similarity';
+              thisEventDuplicates.push(rightEvent);
+              continue;
+            }
+
           }
         }
+
+      }
+
+
+      
+      //////////////////////////////////////////////////////////////////////
+      // Scoring & Filtering Events
+      //////////////////////////////////////////////////////////////////////
+      const filteredArray = [];
+
+      for (const cluster of clustersOfDuplicates) {
+        // Score all events in the cluster
+        for (const event of cluster) {
+          try {
+            event.score = scores[event.source];
+            if (event.score == undefined) {
+              console.error(`\nError scoring event: ${event.source} not found in scores table`);
+              event.score = 10;
+            };
+          } catch (error) {
+            console.error(`\nError scoring event: ${error}`);
+            event.score = 10;
+          }
+        }
+
+        // Only one event for this cluster of duplicates can survive
+        let maxScore = 0;
+        let eventWithHigerScore;
+        for (const event of cluster) {
+          if (maxScore < event.score) {
+            maxScore = event.score;
+            eventWithHigerScore = event;
+          }
+        }
+
+        filteredArray.push(eventWithHigerScore);
       }
 
       // return only the valid events
+      return filteredArray;
+
+    }
+    
+    /**
+     * Filters an array of events by checking if the title of each event includes any banned strings.
+     *
+     * @param {Array} arrayOfEvents - The array of events to be filtered.
+     * @return {Array} filteredArray - The filtered array of events.
+     */
+    static async filterByBannedStrings(arrayOfEvents) {
+      try {
+        const bannedStrings = fs.readFileSync('./bannedstrings.txt', 'utf-8').split('\n');
+      } catch (error) {
+        console.error('Error reading bannedstrings.txt:', error);
+        return arrayOfEvents;
+      }
+
       let filteredArray = [];
+
+      // If the title of the event includes any of the banned strings, don't push to filtered array
       for (const event of arrayOfEvents) {
-        if (event.isValid) {
+        let isBanned = false;
+        for (const bannedString of bannedStrings) {
+          if (event.title.tolowerCase().includes(bannedString.tolowerCase())) {
+            isBanned = true;
+            break;
+          }
+        }
+        if (!isBanned) {
           filteredArray.push(event);
         }
       }
 
       return filteredArray;
-
+      
     }
-    
 
     static async downloadImage(url, imgLocalDestinationFolder) {
       try {
       // Make a request to fetch the image data
       const response = await axios.get(url, { responseType: 'arraybuffer' });
-    
+
+      // Try to extract the file extension from the 'Content-Type' header
+      let extension;
+      if (response.headers['content-type'] && response.headers['content-type'].startsWith('image/')) {
+        extension = response.headers['content-type'].split('/')[1];
+      } else {
+        // If 'Content-Type' header is not present or not useful, try to infer the file extension from the URL
+        const knownExtensions = ['jpg', 'jpeg', 'gif', 'png', 'webp', 'svg'];
+        extension = knownExtensions.find(ext => url.includes(`.${ext}`)) || 'jpg';
+      }
+
       // Generate a unique filename based on milisecons since Jan 1 1970
       const timestamp = Date.now();
-      const filename = `${timestamp}.jpg`;
+      const filename = `${timestamp}.${extension}`;
   
       // Create the destination folder if it doesn't exist
       if (!fs.existsSync(imgLocalDestinationFolder)) {
@@ -295,6 +458,20 @@ class EventItem {
   
       // Write the image data to the specified file path
       fs.writeFileSync(filePath, Buffer.from(response.data));
+
+      // If the file extension is webp, convert it to png (Resemblejs doesn't support webp, and we need it to detect duplicated events)
+      if (extension === 'webp') {
+        try {
+          webp.grant_permission();
+          const absolutePath = process.cwd()
+          const localDestinationWithoutDot = imgLocalDestinationFolder.slice(1);
+          const fileToConvert = `${absolutePath}${localDestinationWithoutDot}${filename}`;
+          const destinationFile = `${absolutePath}${localDestinationWithoutDot}${timestamp}.png`;
+          const result = await webp.dwebp(fileToConvert, destinationFile, '-o');
+        } catch (error) {
+          console.error(`Error converting webp to jpg: ${error}`);
+        }
+      }
   
       // Return a resolved promise to indicate success & the filename
       return filename;
