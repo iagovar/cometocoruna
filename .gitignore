@@ -1,6 +1,6 @@
 ﻿# ignoramos todos los archivos de configuración
 
-/calendar/authentication.config.json
+/calendar/config/authentication.config.json
 /web/config/config.yml
 
 # Ignoramos assets y artículos de la web
