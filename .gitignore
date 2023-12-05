@@ -20,6 +20,9 @@
 # Ignoramos cualquier archivo de test que pueda haber
 /calendar/test.*
 /calendar/testing.*
+/calendar/test/
+/calendar/tests/
+/calendar/sandbox/
 
 # Ignore the laragon folder
 
