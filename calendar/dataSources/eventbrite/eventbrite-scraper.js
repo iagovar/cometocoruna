@@ -151,10 +151,10 @@ async function parseEventBriteDOM(entryPoint, maxPages, user, password) {
         // Going after the content
         try {
           // Convert() strips of html tags
-          item.content = convert(eventData.description);
+          item.description = convert(eventData.description);
         } catch (error) {
             console.error(`\n\nFailed to obtain description in ${item.link}, setting description to '':\n${error}`);
-            item.content = "";
+            item.description = "";
         }
 
         // Going after the price
@@ -166,9 +166,36 @@ async function parseEventBriteDOM(entryPoint, maxPages, user, password) {
                 break;
               }
             }
+
+            if (String(item.price) === "undefined") {
+              item.price = "Free or unavailable";
+            }
         } catch (error) {
             console.error(`\n\nFailed to obtain price in ${item.link}, setting it to 'Free or unavailable':\n${error}`);
             item.price = "Free or unavailable";
+        }
+
+        // Going after location
+        try {
+          item.location = eventData.location.name;
+        } catch (error) {
+          item.location = "";
+        }
+
+        // Going after text content
+        try {
+          item.textContent = await eventPage.evaluate(() => {
+            return document.querySelector('.event-details__main').innerText;
+          })
+        } catch (error) {
+          item.textContent = "";
+        }
+
+        // Going after html content
+        try {
+          item.htmlContent = await eventPage.content();
+        } catch (error) {
+          item.htmlContent = "";
         }
 
         // Closing tab
@@ -178,14 +205,19 @@ async function parseEventBriteDOM(entryPoint, maxPages, user, password) {
         // if nothing failed create an event instance and push it to the list of events
         // The EventItem constructor should handle all sanity checks and conversions
         const tempItem = new EventItem(
-          item.title,
-          item.link,
-          item.price,
-          item.content,
-          item.image,
-          item.source,
-          item.initDate,
-          item.endDate
+          {
+            title : item.title,
+            link : item.link,
+            price : item.price,
+            description : item.description,
+            image : item.image,
+            source : item.source,
+            initDate : item.initDate,
+            endDate : item.endDate,
+            location : item.location,
+            textContent : item.textContent,
+            htmlContent : item.htmlContent
+          }
         );
 
         // Adding the item to the list

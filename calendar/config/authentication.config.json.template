@@ -1,0 +1,18 @@
+{
+  "ftp": {
+    "host": "myserver.com",
+    "port": 21,
+    "user": "myuser",
+    "password": "mypass"
+  },
+  "facebook": {
+    "userToken": "",
+    "appToken": ""
+  },
+  "eventbrite": {
+    "privateToken": "",
+    "user": "",
+    "password": ""
+
+  }
+}

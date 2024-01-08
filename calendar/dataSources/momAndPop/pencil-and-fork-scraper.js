@@ -10,7 +10,7 @@ async function parsePencilAndFork(url, authConfigObj) {
     let PencilAndFork = new AbstractDomScraper(
         url,
         0, // no max pages required
-        authConfigObj,
+        undefined,
         'puppeteer' // library we'll use
     )
 
@@ -47,14 +47,17 @@ async function parsePencilAndFork(url, authConfigObj) {
         }
 
         const tempEvent = new EventItem(
-            singleEvent.name,
-            singleEvent.url,
-            priceRangeString,
-            convert(singleEvent.description),
-            singleEvent.image,
-            'pencilandfork',
-            new Date(singleEvent.startDate),
-            new Date(singleEvent.endDate)
+            {
+                title : singleEvent.name,
+                link : singleEvent.url,
+                price : priceRangeString,
+                description : convert(singleEvent.description),
+                image : singleEvent.image,
+                source : 'pencilandfork',
+                initDate : new Date(singleEvent.startDate),
+                endDate : new Date(singleEvent.endDate),
+                location : 'Pencil and Fork'
+              }
           );
 
         PencilAndFork.listOfEvents.push(tempEvent);

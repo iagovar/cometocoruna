@@ -19,7 +19,7 @@ class ReadTextFromImage {
         this.provider = provider;
         
         try {
-            this.authConfig = JSON.parse(fs.readFileSync('./authentication.config.json', 'utf-8'));
+            this.authConfig = require('./config/authentication.config.json');
             this.key = this.authConfig[`${this.provider}`].key;
             this.endpoint = this.authConfig[`${this.provider}`].endpoint;
         } catch (error) {

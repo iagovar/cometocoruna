@@ -144,12 +144,14 @@ async function parseInstagramApify(arrayOfAccounts, authConfigObj, force = false
 
         // Check if the item is already in the database (by URL & date), and remove from items if it is
         // This saves money from the OCR and GPT APIs
-        const myDatabase = new DatabaseConnection();
-        for (let index = 0; index < items.length; index++) {
-            const dateInDB = await myDatabase.checkLinkInDB(items[index].url);
-            if (dateInDB !== null) {
-                items.splice(index, 1);
-                console.log(`\n\nInstagram post already in DB, removing before senting to OCR+GPT: ${items[index].url}\n\n`);
+        if (force == false) {
+            const myDatabase = new DatabaseConnection();
+            for (let index = 0; index < items.length; index++) {
+                const dateInDB = await myDatabase.checkLinkInDB(items[index].url);
+                if (dateInDB !== null) {
+                    items.splice(index, 1);
+                    console.log(`\n\nInstagram post already in DB, removing before sending to OCR+GPT: ${items[index].url}\n\n`);
+                }
             }
         }
 
@@ -173,6 +175,8 @@ async function performOCR(arrayOfPosts) {
 
     // Let's transform images into text through cloud OCR
     for (const post of arrayOfPosts) {
+        // Azure free tier is rate limited to 2 calls per second and 20 per minute, so we need to wait a bit
+        await AbstractDomScraper.waitSomeSeconds(5,5);
         post.ocr = await cloudOCR.getTextFromURL(post.displayUrl);
     }
 
@@ -194,7 +198,13 @@ async function getEventStructure(arrayOfPosts) {
         post.llmInput = `Caption of the instagram post: \n\n<instagram-post>${post.caption}</instagram-post> \n\n OCR performed to the instagram image: <instagram-ocr>${post.ocr}</instagram-ocr>`;
 
         // Sending post to LLM and get an array of events
-        let tempArray = await llm.getEventsList(post.llmInput);   
+        let tempArray;
+        try {
+            tempArray = await llm.getEventsList(post.llmInput); 
+        } catch (error) {
+            console.error(`\n\nError getting events from LLM:\n${error}`);
+            continue;
+        }
 
         // Adding necessary properties from posts to the events in the array
         // Check apify/instagram-post-scraper
@@ -209,19 +219,24 @@ async function getEventStructure(arrayOfPosts) {
 
     // Create array of event objects
     for (const thisEvent of arrayOfLLmResults) {
-        let tempEvent = new EventItem(
-            thisEvent.title, // title
-            thisEvent.url, // event url
-            thisEvent.price, // price
-            thisEvent.description, // event content
-            thisEvent.img, // event image
-            thisEvent.username, // Event source
-            new Date(thisEvent.initDate), // Event initDate
-            new Date(thisEvent.endDate), // event endDate
-            thisEvent.location  // event location
-        )
-
-        arrayOfEventObjects.push(tempEvent);
+        try {
+            let tempEvent = new EventItem(
+                thisEvent.title, // title
+                thisEvent.url, // event url
+                thisEvent.price, // price
+                thisEvent.description, // event content
+                thisEvent.img, // event image
+                thisEvent.username, // Event source
+                new Date(thisEvent.initDate), // Event initDate
+                new Date(thisEvent.endDate), // event endDate
+                thisEvent.location  // event location
+            )
+    
+            arrayOfEventObjects.push(tempEvent);
+        } catch (error) {
+            console.error(`\n\nError creating event object from LLM results:\n${error}`);
+            continue;
+        }
     }
 
     return arrayOfEventObjects;
@@ -234,9 +249,9 @@ const arrayOfAccounts = [
     "https://www.instagram.com/galeriagreleria/"
 ];
 const fs = require('fs');
-const authConfig = JSON.parse(fs.readFileSync('./authentication.config.json', 'utf-8'));
+const authConfig = JSON.parse(fs.readFileSync(`${__dirname}/../../config/authentication.config.json`, 'utf-8'));
 //const scrapedItems = parseInstagramDom(arrayOfAccounts, authConfig.instagram);
-const scrapedItems2 = parseInstagramApify(arrayOfAccounts, authConfig.apify);
+const scrapedItems2 = parseInstagramApify(arrayOfAccounts, authConfig.apify, true);
 */
 
 module.exports = {

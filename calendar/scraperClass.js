@@ -32,7 +32,12 @@ class AbstractDomScraper {
 
     /**
      * Generates a random number of seconds between the minimum and maximum values,
-     * and waits for that amount of time before resolving the promise.
+     * and waits for that amount of time before resolving the promise. 
+     * 
+     * Examples:
+     * 
+     * waitSomeSeconds(5,10) will wait for a random number of seconds between 5 and 10.
+     * waitSomeSeconds(5,5) will wait for 5 seconds.
      *
      * @param {number} [minSeconds=5] - The minimum number of seconds to wait.
      * @param {number} [maxSeconds=10] - The maximum number of seconds to wait.

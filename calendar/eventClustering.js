@@ -1,5 +1,4 @@
 const { add, format, startOfDay, endOfDay } = require('date-fns');
-const axios = require('axios');
 const fs = require('fs');
 const { EventItem } = require('./eventClass');
 
@@ -89,6 +88,19 @@ async function eventClustering(events, numDays, imgLocalDestinationFolder, imgRe
     return clusterList;
 }
 
+/**
+ * Generates clusters for a given number of days.
+ *
+ * @param {number} numDays - The number of days for which clusters need to be generated.
+ * @return {Array} An array of cluster objects representing each day.
+ *
+ * Each cluster object has the following fields:
+ * - index: The index of the cluster.
+ * - cssSelector: The CSS selector for the cluster.
+ * - date: The date of the cluster.
+ * - dayName: The name of the day for the cluster.
+ * - dayEvents: An array of events for the day.
+ */
 function generateClusters(numDays) {
     const clusterList = [];
     const today = startOfDay(new Date());

@@ -12,12 +12,12 @@ const fs = require('fs');
 
 
 class RetrieveFromLLM {
-    constructor(provider = "openai", model = "gpt-3.5-turbo-0613") {
+    constructor(provider = "openai", model = "gpt-3.5-turbo") {
         try {
 
             this.provider = provider;
 
-            this.authConfig = JSON.parse(fs.readFileSync('./authentication.config.json', 'utf-8'));
+            this.authConfig = require('./config/authentication.config.json');
             this.apikey = this.authConfig[`${this.provider}`].apiKey;
             this.organization = this.authConfig[`${this.provider}`].organization;
 
@@ -26,48 +26,54 @@ class RetrieveFromLLM {
             this.systemInstructions = "";
             this.userInstructions = "";
 
+            this.eventCategories = Object.keys(require('./config/categories.config.json'));
+
             this.jsonFunctions = [
                 {
                     "name": "getEventsAttributes",
                     "description": "For every event return an array itwm with the title, description, price, location, ISO 8601 initDate and ISO 8601 endDate. If there's no event, return an empty array.",
                     "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "listOfEvents": {
-                        "type": "array",
-                        "description": "Array of events. If there are no events in the input text, just use an empty array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                            "title": {
-                                "type": "string",
-                                "description": "The event title, e.g. Viñetas desde o Atlántico 2023"
-                            },
-                            "description": {
-                                "type": "string",
-                                "description": "The event description (leave empty in case of not being able to provide it or being too short), e.g. Edición do Viñetas desde o Atlántico do ano 2023 con estas novedades"
-                            },
-                            "price": {
-                                "type": "string",
-                                "description": "The event price, e.g. 100.00, Free or unavailable in case of not finding a price"
-                            },
-                            "location": {
-                                "type": "string",
-                                "description": "The event location, e.g. Calle Sinforiano Lopez 8, Unavailable in case of not finding a place"
-                            },
-                            "initDate": {
-                                "type": "string",
-                                "description": "The event starting date in ISO 8601 format, e.g. 2023-01-01T00:00:00"
-                            },
-                            "endDate": {
-                                "type": "string",
-                                "description": "The event ending date in ISO 8601 format, e.g. 2023-01-01T00:00:00. If no ending date is found, return starting date in ISO 8601 format."
+                        "type": "object",
+                        "properties": {
+                            "listOfEvents": {
+                                "type": "array",
+                                "description": "Array of events. If there are no events in the input text, just use an empty array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "title": {
+                                            "type": "string",
+                                            "description": "The event title, e.g. Viñetas desde o Atlántico 2023"
+                                        },
+                                        "description": {
+                                            "type": "string",
+                                            "description": "The event description (leave empty in case of not being able to provide it or being too short), e.g. Edición do Viñetas desde o Atlántico do ano 2023 con estas novedades"
+                                        },
+                                        "price": {
+                                            "type": "string",
+                                            "description": "The event price, e.g. 100.00, Free or unavailable in case of not finding a price"
+                                        },
+                                        "location": {
+                                            "type": "string",
+                                            "description": "The event location, e.g. Calle Sinforiano Lopez 8, Unavailable in case of not finding a place"
+                                        },
+                                        "initDate": {
+                                            "type": "string",
+                                            "description": "The event starting date in ISO 8601 format, e.g. 2023-01-01T00:00:00"
+                                        },
+                                        "endDate": {
+                                            "type": "string",
+                                            "description": "The event ending date in ISO 8601 format, e.g. 2023-01-01T00:00:00. If no ending date is found, return starting date in ISO 8601 format."
+                                        },
+                                        "categories": {
+                                            "type": "sring",
+                                            "description": `Select at leas one of the following categories: ${this.eventCategories.join(", ")}`
+                                        }
+                                    },
+                                    "required": ["title", "price", "initDate"]
+                                }
                             }
-                            },
-                            "required": ["title", "price", "initDate"]
                         }
-                        }
-                    }
                     }
                 }
                 ];
@@ -95,6 +101,8 @@ class RetrieveFromLLM {
                     Not finding a starting date is an indication that there's no event, so you shouldn't return it.
 
                     If there's starting date but no ending date, just use the starting date for both.
+
+                    Events like the opening of a shop, a promotion of a product, etc. should no be included in the list. This is a list of the categories of events I'm looking for, so you can get an idea: ${this.eventCategories.join(", ")}
                     `;
             }
         } catch (error) {

@@ -1,0 +1,18 @@
+#barrios > path:hover {
+    shape-rendering: crispedges;
+    fill: white;
+    cursor: pointer;
+}
+
+#nombres text {
+    pointer-events: none;
+    user-select: none;
+}
+
+.accordion .button {
+    cursor: pointer;
+}
+
+text tspan {
+    font-size: 12px;
+}

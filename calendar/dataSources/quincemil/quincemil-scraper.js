@@ -3,14 +3,19 @@ const { convert } = require('html-to-text');
 const { EventItem } = require('../../eventClass.js');
 const DatabaseConnection = require('../../databaseClass.js');
 const dateFns = require('date-fns');
+const { jsonrepair } = require('jsonrepair');
 
 
 
-async function parseQuincemilDom(entryPoint, maxPages) {
+async function parseQuincemilDom(entryPoint, maxPages, debug = false) {
     // Opening puppeteer and applying configurations
     const browser = await puppeteer.launch({
         headless: true
     })
+
+    let longitud;
+    let cantidadDeFallos = 0;
+    let fallos = [];
 
     const wrapperPage = await browser.newPage();
 
@@ -49,6 +54,7 @@ async function parseQuincemilDom(entryPoint, maxPages) {
     * 
     * All events should have title, link, initDate
     */
+    longitud = wrapperOfEvents.length
     for (const singleEvent of wrapperOfEvents) {
         // Declaring Item and EventPage before try/catch so it's available in both
         // blocks
@@ -64,17 +70,20 @@ async function parseQuincemilDom(entryPoint, maxPages) {
             continue;
         }
 
-        // If the item has been in the database for less than 5 days, skip it
-        const myDatabase = new DatabaseConnection();
-        const dateInDB = await myDatabase.checkLinkInDB(item.link);
-        const today = new Date();
-        if (dateInDB != null) {
-            const howManyDays = dateFns.differenceInDays(today, dateInDB);
-            if (howManyDays < 5) {
-            console.log(`\nItem link already in DB for less than 5 days, skipping:\n${item.link}`);
-            continue;
+        if (debug == false ) {
+            // If the item has been in the database for less than 5 days, skip it
+            const myDatabase = new DatabaseConnection();
+            const dateInDB = await myDatabase.checkLinkInDB(item.link);
+            const today = new Date();
+            if (dateInDB != null) {
+                const howManyDays = dateFns.differenceInDays(today, dateInDB);
+                if (howManyDays < 5) {
+                console.log(`\nItem link already in DB for less than 5 days, skipping:\n${item.link}`);
+                continue;
+                }
             }
         }
+
 
         // Navigating to item.link, where we'll get the rest of the event info
         try {
@@ -91,9 +100,12 @@ async function parseQuincemilDom(entryPoint, maxPages) {
         let eventData = null;
         try {
             scriptContent = await eventPage.$eval('script[type="application/ld+json"]', (script) => script.textContent);
+            scriptContent = jsonrepair(scriptContent);
             eventData = JSON.parse(scriptContent);
         } catch (error) {
             console.error(`\n\nSkipping and closing tab: Failed locating data script in ${item.link}\n${error}`);
+            cantidadDeFallos += 1;
+            fallos.push(scriptContent);
             await eventPage.close();
             continue;
         }
@@ -128,13 +140,13 @@ async function parseQuincemilDom(entryPoint, maxPages) {
             item.image = "https://i.imgur.com/DLAyDDi.png"; // Logo quincemil
         }
 
-        // Going after the content
+        // Going after the description
         try {
             // Convert() strips of html tags
-            item.content = convert(eventData.description);
+            item.description = convert(eventData.description);
         } catch (error) {
             console.error(`\n\nFailed to obtain description in ${item.link}, setting description to '':\n${error}`);
-            item.content = "";
+            item.description = "";
         }
 
         // Going after the price
@@ -145,6 +157,30 @@ async function parseQuincemilDom(entryPoint, maxPages) {
             item.price = "Free or unavailable";
         }
 
+        // Going after the location
+        try {
+            item.location = eventData.location.name;
+        } catch (error) {
+            console.error(`\n\nFailed to obtain location in ${item.link}, setting it to '':\n${error}`);
+            item.location = "";
+        }
+
+        // Going after the textContent
+        try {
+            item.textContent = await eventPage.evaluate(() => {
+                return document.querySelector('.articulo_contenido').innerText;
+                })
+        } catch (error) {
+            item.textContent = "";
+        }
+
+        // Going after the htmlContent
+        try {
+            item.htmlContent = await eventPage.content();
+        } catch (error) {
+            item.htmlContent = "";
+        }
+
         // Closing tab
         console.log(`Closing page: Scraping finished for ${item.link}`);
         await eventPage.close();
@@ -152,14 +188,19 @@ async function parseQuincemilDom(entryPoint, maxPages) {
         // if nothing failed create an event instance and push it to the list of events
         // The EventItem constructor should handle all sanity checks and conversions
         const tempItem = new EventItem(
-            item.title,
-            item.link,
-            item.price,
-            item.content,
-            item.image,
-            item.source,
-            item.initDate,
-            item.endDate
+            {
+                title : item.title,
+                link : item.link,
+                price : item.price,
+                description : item.description,
+                image : item.image,
+                source : item.source,
+                initDate : item.initDate,
+                endDate : item.endDate,
+                location : item.location,
+                textContent : item.textContent,
+                htmlContent : item.htmlContent
+              }
         );
 
         listOfEvents.push(tempItem);
@@ -167,17 +208,18 @@ async function parseQuincemilDom(entryPoint, maxPages) {
     }
 
     // For loope ended, close the browser
+    console.log(`${longitud} - ${cantidadDeFallos}`)
     console.log("Closing browser in Quincemil");
     await browser.close();
     return listOfEvents;
 }
 
-/**
+/*
 const entryPoint = 'https://www.elespanol.com/quincemil/servicios/agenda/zona/a-coruna';
 const maxPages = 1;
 
 
-const scrapedItems = parseQuincemilDom(entryPoint, maxPages);
-**/
+const scrapedItems = parseQuincemilDom(entryPoint, maxPages, true);
+*/
 
 module.exports = parseQuincemilDom;

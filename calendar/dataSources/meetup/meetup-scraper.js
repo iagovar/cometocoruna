@@ -23,7 +23,7 @@ const dateFns = require('date-fns');
  * @param {number} maxPages - The maximum number of pages to scrape.
  * @return {Promise<Array>} A promise that resolves to an array of event objects.
  */
-async function parseMeetupDOM(entryPoints, maxPages) {
+async function parseMeetupDOM(entryPoints, maxPages, debug = false) {
     // Opening puppeteer and applying configurations
     const browser = await puppeteer.launch({
       headless: true
@@ -57,11 +57,12 @@ async function parseMeetupDOM(entryPoints, maxPages) {
         // Selecting all wrapper elements
         let wrapperOfEvents = null;
         try {
-            wrapperOfEvents = await wrapperPage.$$('.eventList .eventCard');
+            wrapperOfEvents = await wrapperPage.$$('a[data-event-label*=card]');
+            
+
         } catch (error) {
-            console.error(`\n\nCouldn't locate wrapper of events in ${entryPoint}\nClosing browser and returining an empty array: ${error}`);
-            await browser.close();
-            return [];
+            console.error(`\n\nCouldn't locate wrapper of events in ${entryPoint}\nMoving to next the next entrypoint: ${error}`);
+            continue;
         }
 
         /*
@@ -74,25 +75,36 @@ async function parseMeetupDOM(entryPoints, maxPages) {
             // blocks
             let item = {source: "meetup"};
             let eventPage;
-            
-            // Extracting title and link from a wrapper card
+
+            // In meetup, some cards show similars events etc, we're not interested in those
             try {
-                item.title = await singleEvent.$eval('h2 > div > a', (a) => a.innerText.trim());
-                item.link = await singleEvent.$eval('h2 > div > a', (a) => a.href);            
+                const parentId = await singleEvent.evaluate(element => element.parentElement.id);
+                if (parentId.includes('similar') && !parentId.includes('e-')) {
+                    continue;
+                }
             } catch (error) {
-                console.error(`\n\nCouldn't retrieve title and link from a ${item.source} wrapper \nJumping to next event: ${error}`);
+                console.error(`\n\nCouldn't retrieve parent id from a ${item.source} wrapper \nJumping to next event: ${error}`);
+            }
+            
+            // Extracting  link from wrapper card
+            try {
+                item.link = await singleEvent.evaluate(element => element.href);          
+            } catch (error) {
+                console.error(`\n\nCouldn't retrieve link from a ${item.source} wrapper \nJumping to next event: ${error}`);
                 continue;
             }
 
             // If the item has been in the database for less than 5 days, skip it
-            const myDatabase = new DatabaseConnection();
-            const dateInDB = await myDatabase.checkLinkInDB(item.link);
-            const today = new Date();
-            if (dateInDB != null) {
-                const howManyDays = dateFns.differenceInDays(today, dateInDB);
-                if (howManyDays < 5) {
-                console.log(`\nItem link already in DB for less than 5 days, skipping:\n${item.link}`);
-                continue;
+            if (debug == false) {
+                const myDatabase = new DatabaseConnection();
+                const dateInDB = await myDatabase.checkLinkInDB(item.link);
+                const today = new Date();
+                if (dateInDB != null) {
+                    const howManyDays = dateFns.differenceInDays(today, dateInDB);
+                    if (howManyDays < 5) {
+                    console.log(`\nItem link already in DB for less than 5 days, skipping:\n${item.link}`);
+                    continue;
+                    }
                 }
             }
 
@@ -133,6 +145,15 @@ async function parseMeetupDOM(entryPoints, maxPages) {
                 continue;
             }
 
+            // Going after title
+            try {
+                item.title = eventData.name;
+            } catch (error) {
+                console.error(`\n\nSkipping and closing tab: Failed locating title in ${item.link} \n${error}`);
+                await eventPage.close();
+                continue;
+            }
+
             // Going after initDate
             try {
                 item.initDate = eventData.startDate;
@@ -162,7 +183,7 @@ async function parseMeetupDOM(entryPoints, maxPages) {
             // Going after the content
             try {
                 // Convert() strips of html tags
-                item.content = convert(eventData.description);
+                item.description = convert(eventData.description);
             } catch (error) {
                 console.error(`\n\nFailed to obtain description in ${item.link}, setting description to '':\n${error}`);
                 item.content = "";
@@ -182,6 +203,31 @@ async function parseMeetupDOM(entryPoints, maxPages) {
                 if (item.price === "") {item.price = "Free or unavailable";}
             }
 
+            // Going after location
+            try {
+                item.location = eventData.location.name;
+            } catch (error) {
+                console.error(`\n\nFailed to obtain location in ${item.link}, setting location to '':\n${error}`);
+                item.location = "";
+            }
+
+            // Going after text content
+            try {
+                item.textContent = await eventPage.evaluate(() => {
+                return document.querySelector('#event-details').innerText;
+                })
+            } catch (error) {
+                item.textContent = "";
+            }
+
+
+            // Going after html content
+            try {
+                item.htmlContent = await eventPage.content();
+            } catch (error) {
+                item.htmlContent = "";
+            }
+
             // Closing tab
             console.log(`Closing page: Scraping finished for ${item.link}`);
             await eventPage.close();
@@ -189,14 +235,19 @@ async function parseMeetupDOM(entryPoints, maxPages) {
             // if nothing failed create an event instance and push it to the list of events
             // The EventItem constructor should handle all sanity checks and conversions
             const tempItem = new EventItem(
-                item.title,
-                item.link,
-                item.price,
-                item.content,
-                item.image,
-                item.source,
-                item.initDate,
-                item.endDate
+                {
+                    title : item.title,
+                    link : item.link,
+                    price : item.price,
+                    description : item.description,
+                    image : item.image,
+                    source : item.source,
+                    initDate : item.initDate,
+                    endDate : item.endDate,
+                    location : item.location,
+                    textContent : item.textContent,
+                    htmlContent : item.htmlContent
+                }
             );
 
             listOfEvents.push(tempItem);
@@ -207,18 +258,19 @@ async function parseMeetupDOM(entryPoints, maxPages) {
     // For loope ended, close the browser
     console.log("Closing browser in Meetup");
     await browser.close();
+    if (listOfEvents.length === 0) {console.log("No events found in Meetup");}
     return listOfEvents;
 }
 
 /*
 const activeMeetupGroups = [
-"https://www.meetup.com/a-coruna-cork-y-canvas-sessions/events/",
-"https://www.meetup.com/es-ES/a-coruna-expats/events/"
+"https://www.meetup.com/es-ES/english-conversation-language-transfer/events/",
+"https://www.meetup.com/python-a-coruna/events/"
 
 ];
 const maxPages = 1;
 
-const scrapedItems = parseMeetupDOM(activeMeetupGroups, maxPages);
+const scrapedItems = parseMeetupDOM(activeMeetupGroups, maxPages, true);
 */
   
 module.exports = parseMeetupDOM;

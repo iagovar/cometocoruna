@@ -1,0 +1,70 @@
+header {
+    color: white;
+}
+
+/* Full width image header */
+header.index::before {
+    content: "";
+    background-image: url('../../../assets/img/hompage2.jpg');
+    background-size: cover;
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: -10;
+    overflow: hidden;
+}
+
+/* Full with image dark overlay on the header image */
+header.index::after {
+    content: "";
+    background-color: rgba(0, 0, 0, 0.3);
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: -9;
+    overflow: hidden;
+}
+
+/* make header images white */
+header img,
+header summary::before {
+    filter: brightness(10);
+}
+
+nav .top-links {
+    background-color: black;
+}
+
+nav .top-links a,
+nav .top-links a:visited {
+    color: white;
+}
+
+nav a.why-living-coruna:hover {
+    color: var(--background-color-why-living-coruna);
+}
+nav a.finding-home:hover {
+    color: var(--background-color-finding-home);
+}
+nav a.moving-around:hover {
+    color: var(--background-color-moving-around);
+}
+nav a.working:hover {
+    color: var(--background-color-working);
+}
+nav a.finding-friends:hover {
+    color: var(--background-color-finding-friends);
+}
+nav a.events:hover {
+    color: var(--background-color-events);
+}
+
+nav a.services:hover {
+    color: var(--background-color-services);
+}
