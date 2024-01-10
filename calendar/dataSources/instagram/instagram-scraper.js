@@ -123,7 +123,7 @@ async function parseInstagramApify(arrayOfAccounts, authConfigObj, force = false
     try {
         // Initialize the ApifyClient with API token
         const client = new ApifyClient({
-            token: authConfigObj.token,
+            token: authConfigObj.apify.token,
         });
 
         // Prepare Actor input
@@ -157,10 +157,10 @@ async function parseInstagramApify(arrayOfAccounts, authConfigObj, force = false
 
         // Transform instagram post image to text
         // Array passes by reference so no need to return
-        await performOCR(items);
+        await performOCR(items, authConfigObj);
 
         // Transforming text+img into a properly structured event list
-        let finalArray = await getEventStructure(items);
+        let finalArray = await getEventStructure(items, authConfigObj);
 
         return finalArray;
     } catch (error) {
@@ -169,24 +169,24 @@ async function parseInstagramApify(arrayOfAccounts, authConfigObj, force = false
     }
 }
 
-async function performOCR(arrayOfPosts) {
+async function performOCR(arrayOfPosts, authConfigObj) {
     // Instance of cloud ocr
-    const cloudOCR = new ocr.ReadTextFromImage("azure");
+    const cloudOCR = new ocr.ReadTextFromImage(authConfigObj, "azure");
 
     // Let's transform images into text through cloud OCR
     for (const post of arrayOfPosts) {
         // Azure free tier is rate limited to 2 calls per second and 20 per minute, so we need to wait a bit
-        await AbstractDomScraper.waitSomeSeconds(5,5);
+        await AbstractDomScraper.waitSomeSeconds(4,4);
         post.ocr = await cloudOCR.getTextFromURL(post.displayUrl);
     }
 
     return arrayOfPosts;
 }
 
-async function getEventStructure(arrayOfPosts) {
+async function getEventStructure(arrayOfPosts, authConfigObj) {
 
     // Creating LLM instance
-    const llm = new gpt.RetrieveFromLLM();
+    const llm = new gpt.RetrieveFromLLM(authConfigObj);
 
     // Creating empty array of events for later use
     let arrayOfLLmResults = [];
@@ -202,7 +202,7 @@ async function getEventStructure(arrayOfPosts) {
         try {
             tempArray = await llm.getEventsList(post.llmInput); 
         } catch (error) {
-            console.error(`\n\nError getting events from LLM:\n${error}`);
+            console.error(`\n\nError getting events from LLM:\n${error.message}`);
             continue;
         }
 
@@ -242,17 +242,17 @@ async function getEventStructure(arrayOfPosts) {
     return arrayOfEventObjects;
 }
 
-/*
+
 const arrayOfAccounts = [
     "https://www.instagram.com/ateneobarcultural/",
     "https://www.instagram.com/acefala.colectivo/",
     "https://www.instagram.com/galeriagreleria/"
 ];
 const fs = require('fs');
-const authConfig = JSON.parse(fs.readFileSync(`${__dirname}/../../config/authentication.config.json`, 'utf-8'));
+const authConfigObj = require(`${__dirname}/../../config/authentication.config.json`);
 //const scrapedItems = parseInstagramDom(arrayOfAccounts, authConfig.instagram);
-const scrapedItems2 = parseInstagramApify(arrayOfAccounts, authConfig.apify, true);
-*/
+const scrapedItems2 = parseInstagramApify(arrayOfAccounts, authConfigObj, true);
+
 
 module.exports = {
     parseInstagramDom,

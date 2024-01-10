@@ -12,12 +12,12 @@ const fs = require('fs');
 
 
 class RetrieveFromLLM {
-    constructor(provider = "openai", model = "gpt-3.5-turbo") {
+    constructor(authConfigObj, provider = "openai", model = "gpt-3.5-turbo") {
         try {
 
             this.provider = provider;
 
-            this.authConfig = require('./config/authentication.config.json');
+            this.authConfig = authConfigObj;
             this.apikey = this.authConfig[`${this.provider}`].apiKey;
             this.organization = this.authConfig[`${this.provider}`].organization;
 
@@ -66,7 +66,7 @@ class RetrieveFromLLM {
                                             "description": "The event ending date in ISO 8601 format, e.g. 2023-01-01T00:00:00. If no ending date is found, return starting date in ISO 8601 format."
                                         },
                                         "categories": {
-                                            "type": "sring",
+                                            "type": "string",
                                             "description": `Select at leas one of the following categories: ${this.eventCategories.join(", ")}`
                                         }
                                     },
@@ -102,7 +102,7 @@ class RetrieveFromLLM {
 
                     If there's starting date but no ending date, just use the starting date for both.
 
-                    Events like the opening of a shop, a promotion of a product, etc. should no be included in the list. This is a list of the categories of events I'm looking for, so you can get an idea: ${this.eventCategories.join(", ")}
+                    Events like the opening of a shop, a promotion of a product, etc. should no be included in the list. This is a list of the categories of events I'm looking for, so you can get an idea (comma separated): ${this.eventCategories.join(", ")}
                     `;
             }
         } catch (error) {
