@@ -31,7 +31,7 @@ class RetrieveFromLLM {
             this.jsonFunctions = [
                 {
                     "name": "getEventsAttributes",
-                    "description": "For every event return an array itwm with the title, description, price, location, ISO 8601 initDate and ISO 8601 endDate. If there's no event, return an empty array.",
+                    "description": "For every event return an array item with the title, description, price, location, ISO 8601 initDate and ISO 8601 endDate. If there's no event, return an empty array.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -43,7 +43,7 @@ class RetrieveFromLLM {
                                     "properties": {
                                         "title": {
                                             "type": "string",
-                                            "description": "The event title, e.g. Viñetas desde o Atlántico 2023"
+                                            "description": "The event title, e.g. Viñetas desde o Atlántico 2023. If there's no clear title, generate one that describes the event."
                                         },
                                         "description": {
                                             "type": "string",
@@ -104,6 +104,10 @@ class RetrieveFromLLM {
 
                     Events like the opening of a shop, a promotion of a product, etc. should no be included in the list. This is a list of the categories of events I'm looking for, so you can get an idea (comma separated): ${this.eventCategories.join(", ")}
                     `;
+
+                this.userInstructions = `
+                    Decide whether there's an event of this categories ${this.eventCategories.join(", ")} in the event data provided or not. Remember to only use ISO 8601 dates.
+                `;
             }
         } catch (error) {
             throw new Error(`\n\nFailed to set up LLM:\n${error}`);
@@ -122,11 +126,13 @@ class RetrieveFromLLM {
         this.jsonFunctions.push(func);
     }
 
-    async getEventsList(userInstructions = this.userInstructions, temperature = 0.8, tryAgains = 1) {
+    async getEventsList(eventInfo, temperature = 0.8, tryAgains = 1) {
         
-        if (userInstructions.length < 100) {
-            console.error("\n\nWarning: User instructions are too short, under 100 chars!.\n");
+        if (eventInfo.length < 100) {
+            console.error("\n\nWarning: Event info is too short, under 100 chars!.\n");
         }
+
+        const userInstructions = this.userInstructions + "\n\n" + eventInfo;
 
         // Sending the user instructions to the LLM        
         const completion = await this.openai.createChatCompletion({

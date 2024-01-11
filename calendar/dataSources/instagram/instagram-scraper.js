@@ -195,7 +195,14 @@ async function getEventStructure(arrayOfPosts, authConfigObj) {
     // Send every post to LLM and retrieve the list of events
     for (const post of arrayOfPosts) {
         // Creating prompt for LLM ingesting
-        post.llmInput = `Caption of the instagram post: \n\n<instagram-post>${post.caption}</instagram-post> \n\n OCR performed to the instagram image: <instagram-ocr>${post.ocr}</instagram-ocr>`;
+        post.llmInput = `
+        Timestamp of the instagram post: <instagram-timestamp>${post.timestamp}</instagram-timestamp>
+        
+        Caption of the instagram post: <instagram-post>${post.caption}</instagram-post>
+        
+        Hashtags of the instagram post: <instagram-hashtags>${JSON.stringify(post.hashtags)}</instagram-hashtags>
+        
+        OCR performed to the instagram image: <instagram-ocr>${post.ocr}</instagram-ocr>`;
 
         // Sending post to LLM and get an array of events
         let tempArray;
@@ -221,16 +228,19 @@ async function getEventStructure(arrayOfPosts, authConfigObj) {
     for (const thisEvent of arrayOfLLmResults) {
         try {
             let tempEvent = new EventItem(
-                thisEvent.title, // title
-                thisEvent.url, // event url
-                thisEvent.price, // price
-                thisEvent.description, // event content
-                thisEvent.img, // event image
-                thisEvent.username, // Event source
-                new Date(thisEvent.initDate), // Event initDate
-                new Date(thisEvent.endDate), // event endDate
-                thisEvent.location  // event location
-            )
+                {
+                    title: thisEvent.title,
+                    link: thisEvent.url,
+                    price: thisEvent.price,
+                    description: thisEvent.description,
+                    image: thisEvent.img,
+                    source: thisEvent.username,
+                    initDate: new Date(thisEvent.initDate),
+                    endDate: new Date(thisEvent.endDate),
+                    location: thisEvent.location,
+                    categories: thisEvent.categories
+                }
+            );
     
             arrayOfEventObjects.push(tempEvent);
         } catch (error) {
