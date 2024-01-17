@@ -29,6 +29,11 @@
 /laragon/
 /laragon/*
 
+# Ignoramos los archivos python de /inference
+
+/inference/*.pyc
+/inference/inference-virtualenv/
+
 ###
 # Template para javascript VVVVV
 ###

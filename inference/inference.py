@@ -10,9 +10,13 @@ from transformers import pipeline
 
 answerer_model = "MMG/bert-base-spanish-wwm-cased-finetuned-spa-squad2-es-finetuned-sqac"
 classifier_model = "Recognai/zeroshot_selectra_medium"
+generation_model = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 
 answerer = pipeline("question-answering", answerer_model)
 classifier = pipeline("zero-shot-classification", classifier_model)
+
+# LLM not possible to run under current hardware
+#tinyllm = pipeline("text-generation", generation_model)
 
 @app.route("/test", methods=["POST"])
 def test():
@@ -73,7 +77,7 @@ def categorize():
     result = None
 
     try:
-        answer = classifier(context, categoriesList)
+        answer = classifier(context, candidate_labels = categoriesList, hypothesis_template = "Este ejemplo es {}.")
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({"error": f"Error processing request: {e}"}), 500

@@ -105,7 +105,7 @@ async function parseInstagramDom(arrayOfAccounts, authConfigObj) {
  * Parses Instagram data using Apify API.
  *
  * @param {Array} arrayOfAccounts - An array of Instagram account URLs.
- * @param {Object} authConfigObj - An object containing authentication configuration.
+ * @param {Object} authConfigObj - An object containing authentication configuration. It should contain an `apify` property with an `token` property.
  * @param {boolean} [force=false] - Flag indicating whether to force the function execution even if it's not Wednesday.
  * @return {Array} An array of parsed Instagram data.
  */
@@ -252,7 +252,7 @@ async function getEventStructure(arrayOfPosts, authConfigObj) {
     return arrayOfEventObjects;
 }
 
-
+/*
 const arrayOfAccounts = [
     "https://www.instagram.com/ateneobarcultural/",
     "https://www.instagram.com/acefala.colectivo/",
@@ -262,7 +262,7 @@ const fs = require('fs');
 const authConfigObj = require(`${__dirname}/../../config/authentication.config.json`);
 //const scrapedItems = parseInstagramDom(arrayOfAccounts, authConfig.instagram);
 const scrapedItems2 = parseInstagramApify(arrayOfAccounts, authConfigObj, true);
-
+*/
 
 module.exports = {
     parseInstagramDom,

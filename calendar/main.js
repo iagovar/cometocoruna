@@ -10,9 +10,9 @@ Event orchestrator for all events.
 */
 
 // Debug Options.
-// Datasources have their own debug options in their respective files.
 const debugWithoutScraping = false;
 const debugWithoutUploading = true;
+const ForceInstagram = true;
 
 // Requires parsing scripts
 const parseAytoCorunaFeed = require('./dataSources/aytos/ayto-coruna-rss.js');
@@ -29,6 +29,7 @@ const eventClustering = require('./eventClustering.js');
 const uploadFileByFTP = require('./ftpOperations.js');
 const generateHTML = require('./templateOperations.js');
 const { EventItem } = require('./eventClass.js');
+const LocalInference = require('./localInferenceClass.js');
 
 // Other external dependencies
 const fs = require('fs');
@@ -77,8 +78,7 @@ async function main() {
     const pencilAndForkEventsPromise = parsePencilAndFork(scraperEntrypoints.pencilAndFork);
 
     // 2.2.7 Instagram accounts
-    const ForceInstagram = false;
-    const instagramEventsPromise = parseInstagramApify(instagramAccountsToScrapeList, authConfig.apify, ForceInstagram);
+    const instagramEventsPromise = parseInstagramApify(instagramAccountsToScrapeList, authConfig, ForceInstagram);
       
 
     // 2.3 Wait for all promises before putting it all in one array
@@ -112,7 +112,18 @@ async function main() {
       ...instagramEventsArray
       );
 
-    // 2.5 Label events with categories with a combination of formal logic and zero-shot classifiers
+    // 2.5 Label events with categories with a combination of formal logic and zero-shot classifiers. This requires to have te Flask inference server up and running
+
+    const localInferenceServer = new LocalInference("http://localhost:5000/inference");
+
+    await localInferenceServer.startServer();
+
+    await localInferenceServer.getCategories(arrayOfAllEvents);
+
+    // 2.6 Do the same with locations
+    await localInferenceServer.getLocations(arrayOfAllEvents);
+
+    await localInferenceServer.stopServer();
 
     // 3. Store events in DB
     await myDatabase.asyncStoreEventsInDB(arrayOfAllEvents);
@@ -182,10 +193,10 @@ async function main() {
 
      Don't have more time for this bug now.
 
-     The script failed after a couple of days leaving most get requestions on
+     The script failed after a couple of days leaving most get requests on
      timeout, but worked after a reboot of the server.
 
-     The glances tools shows chorome instances on the system when they should be
+     The glances tool shows chrome instances on the system when they should be
      closed, so I assume this is what is causing the problem.
 
      We'll see.

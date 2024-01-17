@@ -12,7 +12,11 @@ Build upon python virtualenv so:
 
 1. Activate virtualenv ``source ./inference-virtualenv/bin/activate``
 2. Install the requirements ``pip install -r requirements.txt``
-3. Run server with ``flask -app inference --host:0.0.0.0``. In my case the inference server is the same hosting the scraper, there you have it in case you want to change the inference location.
+3. Run server with ``flask --app inference run --host=0.0.0.0 --debug``. In my case the inference server is the same hosting the scraper, there you have it in case you want to change the inference location.
+
+    Remove ``--debug`` in production.
+    Be aware that ``--host`` indicates from which adresses are allowed to request, being ``0.0.0.0``all of em.
+    Port ``5000`` as default.
 
 ## How to query
 
@@ -40,6 +44,6 @@ async function makeRequest(url, method, data) {
 // Usage of the function
 makeRequest('http://localhost:5000/inference/categorize', 'post', {
  context: 'Some context',
- categoriesList: ['category1', 'category2']
+ categoriesList: "category1, category2"
 });
 ````

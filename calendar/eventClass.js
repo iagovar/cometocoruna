@@ -265,7 +265,7 @@ class EventItem {
      * 
      * IT MAY PRODUCE FALSE POSITIVES, specially the image comparison. I'm trying hard to not use LLM APIs.
      * 
-     * YOU SHOULDN'T PUSH EVENTS ON DIFFERENT DAYS, because it will lable repeating events as duplicates.
+     * YOU SHOULDN'T PUSH EVENTS ON DIFFERENT DAYS, because it will label repeating events as duplicates.
      * 
      * @param {Array} arrayOfEvents - The array of events to check for duplicates (SAME DAY!!).
      * @return {Array} The filtered array of events without duplicates.
