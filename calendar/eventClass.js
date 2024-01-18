@@ -56,8 +56,8 @@ class EventItem {
 
       this.initDateISO = this.convertAnyDateToISO(eventObject.initDate);
       this.endDateISO = this.convertAnyDateToISO(eventObject.endDate);
-      this.initDateHuman = this.convertISODateToHumanReadable(this.initDateISO);
-      this.endDateHuman = this.convertISODateToHumanReadable(this.endDateISO);
+      this.initDateHuman = this.convertISODateToShortDate(this.initDateISO);
+      this.endDateHuman = this.convertISODateToShortDate(this.endDateISO);
       this.scrapedDateISO = formatISO(new Date());
       
       this.location = eventObject.location;
@@ -192,6 +192,22 @@ class EventItem {
         this.isValidEvent = false;
         return null;
       }
+
+    convertISODateToShortDate(inputDate) {
+      let date = null;
+    
+      if (typeof inputDate === 'string') {
+        date = parseISO(inputDate);
+      }
+    
+      if (isValid(date)) {
+        return format(date, 'dd/MM HH:mm');
+      }
+    
+      console.error(`Invalid date format for Human readable input: ${inputDate} in ${this.link}`);
+      this.isValidEvent = false;
+      return null;
+    }
 
     /**
      * Sanitizes a string for DuckDB by replacing single quotes with two consecutive single quotes.
@@ -465,7 +481,7 @@ class EventItem {
 
       // Generate a unique filename based on milisecons since Jan 1 1970
       const timestamp = Date.now();
-      const filename = `${timestamp}.${extension}`;
+      let filename = `${timestamp}.${extension}`;
   
       // Create the destination folder if it doesn't exist
       if (!fs.existsSync(imgLocalDestinationFolder)) {
@@ -482,11 +498,9 @@ class EventItem {
       if (extension === 'webp') {
         try {
           webp.grant_permission();
-          const absolutePath = process.cwd()
-          const localDestinationWithoutDot = imgLocalDestinationFolder.slice(1);
-          const fileToConvert = `${absolutePath}${localDestinationWithoutDot}${filename}`;
-          const destinationFile = `${absolutePath}${localDestinationWithoutDot}${timestamp}.png`;
-          const result = await webp.dwebp(fileToConvert, destinationFile, '-o');
+          const destinationFile = `${imgLocalDestinationFolder}${timestamp}.jpg`;
+          const result = await webp.dwebp(filePath, destinationFile, '-o');
+          filename = `${timestamp}.jpg`;
         } catch (error) {
           console.error(`Error converting webp to jpg: ${error}`);
         }
