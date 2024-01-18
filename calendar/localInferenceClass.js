@@ -180,9 +180,10 @@ async function main() {
     await miservidor.stopServer();
     console.log("Servidor apagado");
 }
-*/
+
 
 main();
+*/
 
 
 module.exports = LocalInference;
