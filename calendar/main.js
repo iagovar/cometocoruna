@@ -11,8 +11,8 @@ Event orchestrator for all events.
 
 // Debug Options.
 const debugWithoutScraping = false;
-const debugWithoutUploading = true;
-const ForceInstagram = true;
+const debugWithoutUploading = false;
+const ForceInstagram = false;
 
 // Requires parsing scripts
 const parseAytoCorunaFeed = require('./dataSources/aytos/ayto-coruna-rss.js');
@@ -33,22 +33,25 @@ const LocalInference = require('./localInferenceClass.js');
 
 // Other external dependencies
 const fs = require('fs');
+const path = require('path');
 const dateFns = require('date-fns');
+const { exec } = require('child_process');
 
 
 async function main() {
   console.log("============ RUNNING SCRIPT ON " + new Date().toLocaleString() + " ============");
 
   // 1. Create db if it doesn't exist
-  const dbPath = './cometocoruna.sqlite3';
+  const dbPath = path.resolve(__dirname, './cometocoruna.sqlite3');
   const schemaConfig = require('./config/database_schema.json');
   let myDatabase = new DatabaseConnection(dbPath, schemaConfig); // Schema hardcoded in this class
+  await new Promise(resolve => setTimeout(resolve, 2000));
 
   // 1.1 Read configurations
   const authConfig = require('./config/authentication.config.json');
   const scraperEntrypoints = require('./config/scraperEntrypoints.config.json');
-  const meetupGroupsToScrapeList = fs.readFileSync('./config/meetupGroups.config.txt', 'utf-8').split('\n').filter(line => line.trim().length > 0);
-  const instagramAccountsToScrapeList = fs.readFileSync('./config/instagramAccounts.config.txt', 'utf-8').split('\n').filter(line => line.trim().length > 0);
+  const meetupGroupsToScrapeList = fs.readFileSync(path.resolve(__dirname, './config/meetupGroups.config.txt'), 'utf-8').split('\n').filter(line => line.trim().length > 0);
+  const instagramAccountsToScrapeList = fs.readFileSync(path.resolve(__dirname, './config/instagramAccounts.config.txt'), 'utf-8').split('\n').filter(line => line.trim().length > 0);
 
   // 2. Obtains events from each source
   // Each fn should return an array of objects fitting DB schema perfectly
@@ -117,6 +120,7 @@ async function main() {
     const localInferenceServer = new LocalInference("http://localhost:5000/inference");
 
     await localInferenceServer.startServer();
+    await new Promise(resolve => setTimeout(resolve, 20000));
     await localInferenceServer.getCategories(arrayOfAllEvents);
     await localInferenceServer.getLocation(arrayOfAllEvents);
     await localInferenceServer.stopServer();
@@ -142,7 +146,7 @@ async function main() {
   const eventsToCluster = await myDatabase.getEntriesInRange(initDateISO, endDateISO);
 
   // 4.2 Filter events by banned words.
-  const bannedStringsFilePath = './config/banned-strings.txt';
+  const bannedStringsFilePath = path.resolve(__dirname, './config/banned-strings.txt');
   const filteredEvents = await EventItem.filterByBannedStrings(eventsToCluster, bannedStringsFilePath);
 
   // 4.3 Run all the events through a clustering algorithm.
@@ -152,16 +156,16 @@ async function main() {
   // Event clustering also downloads and modifies images for each event.
   // It's done like this because if handled by eventClass there would be too
   // many images to handle, instead of only the filtered ones.
-  const imgLocalDestinationFolder = './template/img/';
+  const imgLocalDestinationFolder = path.resolve(__dirname, './template/img/') + '/';
   const imgRemoteFolderURL = 'https://cometocoruna.com/assets/calendar/img/';
   const eventsToPrint = await eventClustering(filteredEvents, numDays, imgLocalDestinationFolder, imgRemoteFolderURL);
 
   // 4.4 Push objects to template
   const templateSourceName = "template.html";
   const templateOutputName = "calendar-output.html";
-  const templateLocalFolderPath = './template/';
-  const templateSourceString = templateLocalFolderPath + templateSourceName;
-  const templateOutputString = templateLocalFolderPath + templateOutputName;
+  const templateLocalFolderPath = path.resolve(__dirname, './template/') + '/';
+  const templateSourceString = templateLocalFolderPath + '/' + templateSourceName;
+  const templateOutputString = templateLocalFolderPath + '/' + templateOutputName;
 
   await generateHTML(eventsToPrint, templateSourceString, templateOutputString, debugWithoutUploading);
 
@@ -197,7 +201,6 @@ async function main() {
 
      We'll see.
   */
-  const { exec } = require('child_process');
 
   try {
     exec('pkill chrome', (error, stdout, stderr) => {
@@ -208,6 +211,8 @@ async function main() {
     console.error(`Error executing pkill chrome: ${error.message}`);
   }
 
+
+  console.log("Script finished")
 }
 
 main();

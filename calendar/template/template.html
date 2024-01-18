@@ -3,12 +3,7 @@
     <div class="day {{cssSelector}}">{{dayName}}</div>
     {{#if dayEvents.length}}
         {{#each dayEvents}}
-            <div class="event" 
-            data-initDateISO="{{initDateISO}}" 
-            data-endDateISO="{{endDateISO}}" 
-            data-price="{{price}}" 
-            data-source="{{source}}" 
-            data-categories="{{categories}}">
+            <div class="event" data-initDateISO="{{initDateISO}}" data-endDateISO="{{endDateISO}}" data-price="{{price}}" data-source="{{source}}" data-categories="{{categories}}">
                 <div class="image"><img src="{{image}}" loading="lazy" alt="{{title}}"></div>
                 <div class="content">
                     <div class="humanDate">{{initDateHuman}} - {{endDateHuman}}</div>
