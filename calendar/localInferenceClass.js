@@ -9,8 +9,6 @@ class LocalInference {
 
         this.terminal = null;
 
-        // Spinning up a terminal to manage the inference server
-
     }
 
     async startServer() {
@@ -148,7 +146,7 @@ class LocalInference {
                 }
               }
       
-              event.categories = filteredCategories;
+              event.categories = filteredCategories.join(", ");
             } else {
               console.error(`Error ${response.status}: ${response.statusText}`);
             }
