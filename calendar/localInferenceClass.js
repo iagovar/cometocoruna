@@ -61,6 +61,7 @@ class LocalInference {
         const locationQuestion = `¿Dónde se localiza el evento?`;
     
         for (const event of arrayOfEvents) {
+          try { 
             /* Avoid calling the inference service if:
               - event.location lenght is >= 4 (4 is the length of null)
               - event.link contains "instagram", as those are handled by way more powerful LLMs
@@ -68,7 +69,7 @@ class LocalInference {
     
             if (String(event.location).length >= 4) {continue}
             if (String(event.link).includes("instagram")) {continue}
-    
+      
             const context = String(event.textContent)
               .replaceAll("\n", " ")
               .replaceAll("\t", " ")
@@ -93,6 +94,9 @@ class LocalInference {
             } else {
               console.error(`Error ${response.status}: ${response.statusText}`);
             }
+          } catch (error) {
+            console.log(error);
+          }
         }
     
         return arrayOfEvents;
@@ -111,17 +115,18 @@ class LocalInference {
     async getCategories(arrayOfEvents, inferenceUrl = this.inferenceUrl, categoriesList = this.categoriesList) {
 
         for (const event of arrayOfEvents) {
+          try {
             /* Avoid calling the inference service if:
               - event.link contains "instagram", as those are handled by way more powerful LLMs
             */
     
             if (String(event.link).includes("instagram")) {continue}
-            
+          
             const context = String(event.textContent)
               .replaceAll("\n", " ")
               .replaceAll("\t", " ")
               .trim();
-
+  
             const response = await axios({
                 url: `${inferenceUrl}/categorize`,
                 method: 'POST',
@@ -130,7 +135,7 @@ class LocalInference {
                     "categoriesList": categoriesList
                 }
             })
-    
+      
             if (response.status === 200) {
               // Select categories over 0.2 score
               const repliedCategories = response.data.result.labels;
@@ -142,13 +147,15 @@ class LocalInference {
                   filteredCategories.push(repliedCategories[i]);
                 }
               }
-    
+      
               event.categories = filteredCategories;
             } else {
               console.error(`Error ${response.status}: ${response.statusText}`);
             }
-            
-            
+              
+          } catch (error) {
+            console.log(error);
+          }
         }
     
         return arrayOfEvents;
