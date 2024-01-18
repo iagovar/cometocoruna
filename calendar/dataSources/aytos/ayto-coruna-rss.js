@@ -1,6 +1,5 @@
 /* const Parser = require('rss-parser'); */
 const { parse } = require('rss-to-json');
-const { convert } = require('html-to-text');
 const { EventItem } = require('../../eventClass.js');
 const DatabaseConnection = require('../../databaseClass.js');
 const dateFns = require('date-fns');
@@ -112,8 +111,11 @@ async function parseAytoCorunaFeed(url, debug = false) {
       }
 
       // Getting the text & HTML content of the whole page
+      const copyOfEventPage = cheerio.load(eventPage.html());
+      copyOfEventPage('script').remove();
+
       try {
-        item.textContent = eventPage('#contenido').text();
+        item.textContent = copyOfEventPage('#contenido').text();
         item.htmlContent = eventPage('body').html();
       } catch (error) {
         item.textContent = "";
