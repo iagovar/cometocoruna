@@ -79,12 +79,17 @@ class LocalInference {
                 method: 'POST',
                 data: {
                     "context": context,
-                    "question":locationQuestion
+                    "question": locationQuestion
                 }
             });
 
             if (response.status === 200) {
-              event.location = response.data.result.answer;
+              // Select location if it's over 4 chars lenght (null is 4 chars)
+              if (response.data.result.answer.length >= 4) {
+                event.location = response.data.result.answer;
+              } else {
+                event.location = ""
+              }
             } else {
               console.error(`Error ${response.status}: ${response.statusText}`);
             }
@@ -175,8 +180,9 @@ async function main() {
     await miservidor.stopServer();
     console.log("Servidor apagado");
 }
+*/
 
 main();
-*/
+
 
 module.exports = LocalInference;
