@@ -1,0 +1,24 @@
+{
+    "engine": "sqlite3",
+    "tableName": "events",
+    "columns": [
+      {"name": "link", "type": "text"},
+      {"name": "title", "type": "text"},
+      {"name": "price", "type": "text"},
+      {"name": "location", "type": "text"},
+      {"name": "initDateISO", "type": "text"},
+      {"name": "endDateISO", "type": "text"},
+      {"name": "initDateHuman", "type": "text"},
+      {"name": "endDateHuman", "type": "text"},
+      {"name": "scrapedDateISO", "type": "text"},
+      {"name": "description", "type": "text"},
+      {"name": "textContent", "type": "text"},
+      {"name": "htmlContent", "type": "text"},
+      {"name": "screenshot", "type": "blob"},
+      {"name": "image", "type": "text"},
+      {"name": "source", "type": "text"},
+      {"name": "categories", "type": "text"}
+    ],
+    "primaryKey": ["link", "initDateISO"]
+}
+  

@@ -1,6 +1,5 @@
 /* const Parser = require('rss-parser'); */
 const { parse } = require('rss-to-json');
-const { convert } = require('html-to-text');
 const { EventItem } = require('../../eventClass.js');
 const DatabaseConnection = require('../../databaseClass.js');
 const dateFns = require('date-fns');
@@ -15,7 +14,7 @@ const axios = require('axios');
  * @param {string} url - The URL of the feed to parse.
  * @return {Array} An array of objects representing the parsed feed items.
  */
-async function parseAytoCorunaFeed(url) {
+async function parseAytoCorunaFeed(url, debug = false) {
     // Trying to download the feed
     let feed = null;
     try {
@@ -44,15 +43,17 @@ async function parseAytoCorunaFeed(url) {
           continue;
       }
 
-      // If the item has been in the database for less than 5 days, skip it
-      const myDatabase = new DatabaseConnection();
-      const dateInDB = await myDatabase.checkLinkInDB(item.link);
-      const today = new Date();
-      if (dateInDB != null) {
-        const howManyDays = dateFns.differenceInDays(today, dateInDB);
-        if (howManyDays < 5) {
-          console.log(`\nItem link already in DB for less than 5 days, skipping:\n${item.link}`);
-          continue;
+      if (debug == false) {
+        // If the item has been in the database for less than 5 days, skip it
+        const myDatabase = new DatabaseConnection();
+        const dateInDB = await myDatabase.checkLinkInDB(item.link);
+        const today = new Date();
+        if (dateInDB != null) {
+          const howManyDays = dateFns.differenceInDays(today, dateInDB);
+          if (howManyDays < 5) {
+            console.log(`\nItem link already in DB for less than 5 days, skipping:\n${item.link}`);
+            continue;
+          }
         }
       }
 
@@ -88,11 +89,10 @@ async function parseAytoCorunaFeed(url) {
 
       // Going after the content
       try {
-        // Convert() strips of html tags
-        item.content = singleEvent.description;
+        item.description = singleEvent.description;
       } catch (error) {
         console.error(`\n\nFailed to obtain description in ${item.link}, setting description to '':\n${error}`);
-        item.content = "";
+        item.description = "";
       }
 
       // Going after the price
@@ -103,17 +103,41 @@ async function parseAytoCorunaFeed(url) {
         item.price = "Free or unavailable";
       }
 
+      // Going after the location
+      try {
+        item.location = eventPage('.direccion [property="name"]').text();
+      } catch (error) {
+        item.location = "";
+      }
+
+      // Getting the text & HTML content of the whole page
+      const copyOfEventPage = cheerio.load(eventPage.html());
+      copyOfEventPage('script').remove();
+
+      try {
+        item.textContent = copyOfEventPage('#contenido').text();
+        item.htmlContent = eventPage('body').html();
+      } catch (error) {
+        item.textContent = "";
+        item.htmlContent = "";
+      }
+
       // if nothing failed create an event instance and push it to the list of events
       // The EventItem constructor should handle all sanity checks and conversions
       const tempItem = new EventItem(
-        item.title,
-        item.link,
-        item.price,
-        item.content,
-        item.image,
-        item.source,
-        item.initDate,
-        item.endDate
+        {
+          title : item.title,
+          link : item.link,
+          price : item.price,
+          description : item.description,
+          image : item.image,
+          source : item.source,
+          initDate : item.initDate,
+          endDate : item.endDate,
+          location : item.location,
+          textContent : item.textContent,
+          htmlContent : item.htmlContent
+        }
       );
 
       listOfEvents.push(tempItem);
@@ -125,7 +149,7 @@ async function parseAytoCorunaFeed(url) {
 
 /*
 const aytoURL = "https://www.coruna.gal/web/es/rss/ociocultura";
-const aytoEventsPromise= parseAytoCorunaFeed(aytoURL);
+const aytoEventsPromise = parseAytoCorunaFeed(aytoURL, true);
 */
 
 // Exportamos el módulo

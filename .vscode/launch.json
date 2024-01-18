@@ -11,7 +11,7 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\calendar\\ayto\\ayto-rss.js"
+            "program": "${workspaceFolder}/calendar/sandbox/ai.js"
         }
     ]
 }

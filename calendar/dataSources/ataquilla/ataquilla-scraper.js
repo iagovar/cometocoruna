@@ -1,8 +1,8 @@
 const puppeteer = require('puppeteer');
-const { convert } = require('html-to-text');
 const { EventItem } = require('../../eventClass.js');
 const DatabaseConnection = require('../../databaseClass.js');
 const dateFns = require('date-fns');
+var Xvfb = require('xvfb');
 
 /**
  * Parses the Ataquilla DOM to scrape events and returns a list of event items.
@@ -12,10 +12,15 @@ const dateFns = require('date-fns');
  * @param {string} uniqueProjectUUIDNamespace - The namespace for generating unique UUIDs.
  * @return {Promise<Array>} A Promise that resolves to an array of event items.
  */
-async function parseAtaquillaDOM(entryPoint, maxPages) {
-    // Opening puppeteer and applying configurations
-    const browser = await puppeteer.launch({
-      headless: true
+async function parseAtaquillaDOM(entryPoint, maxPages, debug = false) {
+  
+  // Using a virtual display for non-headless browser
+  const virtualDisplay = new Xvfb();
+  virtualDisplay.startSync();
+  
+  // Opening puppeteer and applying configurations
+  const browser = await puppeteer.launch({
+      headless: false
   })
 
   const wrapperPage = await browser.newPage();
@@ -26,10 +31,10 @@ async function parseAtaquillaDOM(entryPoint, maxPages) {
     );
     await wrapperPage.setJavaScriptEnabled(true);
     await wrapperPage.setViewport({
-      width: 1024,
-      height: 768,
+      width: 1280,
+      height: 1024,
       deviceScaleFactor: 1
-    })
+    });
   
   // Go to the entry point URL
   const pageUrl = `${entryPoint}`;
@@ -71,14 +76,16 @@ async function parseAtaquillaDOM(entryPoint, maxPages) {
       }
 
       // If the item has been in the database for less than 5 days, skip it
-      const myDatabase = new DatabaseConnection();
-      const dateInDB = await myDatabase.checkLinkInDB(item.link);
-      const today = new Date();
-      if (dateInDB != null) {
-        const howManyDays = dateFns.differenceInDays(today, dateInDB);
-        if (howManyDays < 5) {
-          console.log(`\nItem link already in DB for less than 5 days, skipping:\n${item.link}`);
-          continue;
+      if (debug == false) {        
+        const myDatabase = new DatabaseConnection();
+        const dateInDB = await myDatabase.checkLinkInDB(item.link);
+        const today = new Date();
+        if (dateInDB != null) {
+          const howManyDays = dateFns.differenceInDays(today, dateInDB);
+          if (howManyDays < 5) {
+            console.log(`\nItem link already in DB for less than 5 days, skipping:\n${item.link}`);
+            continue;
+          }
         }
       }
       
@@ -86,25 +93,16 @@ async function parseAtaquillaDOM(entryPoint, maxPages) {
       // Navigating to item.link, where we'll get the rest of the event info
       try {
           eventPage = await browser.newPage();
+          await eventPage.setJavaScriptEnabled(true);
+          await eventPage.setViewport({
+            width: 1280,
+            height: 1024,
+            deviceScaleFactor: 1
+          });
           await eventPage.goto(item.link);
           await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * (10000 - 12000 + 1)) + 10000));
       } catch (error) {
           console.error(`\n\nError opening a tab in ${item.source}, skipping event ${item.link} \n${error}`);
-          continue;
-      }
-
-      // Extracting Script with event info from HEAD (there are two, $eval selects the first one)
-      let scriptContent = null;
-      let eventData = null;
-      try {
-          /*
-          scriptContent = await eventPage.$eval('script[type="application/ld+json"]', (script) => script.textContent);
-          eventData = JSON.parse(scriptContent);
-          */
-          //*************** Skipping JSON in Ataquilla, format & content is worthless, going with selectors
-      } catch (error) {
-          console.error(`\n\nSkipping and closing tab: Failed locating data script in ${item.link}:\n${error}`);
-          await eventPage.close();
           continue;
       }
 
@@ -149,15 +147,13 @@ async function parseAtaquillaDOM(entryPoint, maxPages) {
           item.image = "https://i.imgur.com/lcplSGi.png"; // Logo ataquilla
       }
 
-      // Going after the content
+      // Going after the description
       try {
-          // Convert() strips of html tags
-          //item.content = convert(eventData.description);
-          // *************  Skipping content in Ataquilla, bloated HTML and badly formatted JSON
-          item.content = "";
+          item.description = await eventPage.$eval('.event-description', (div) => div.innerText.trim());
       } catch (error) {
           console.error(`\n\nFailed to obtain description in ${item.link}, setting description to '':\n${error}`);
-          item.content = "";
+          item.description = "";
+          console.log(await eventPage.content());
       }
 
       // Going after the price
@@ -168,6 +164,22 @@ async function parseAtaquillaDOM(entryPoint, maxPages) {
           item.price = "Free or unavailable";
       }
 
+      // Going after the location
+      try {
+        item.location = await singleEvent.$eval('.venue', (element) => element.innerText.trim());
+      } catch (error) {
+        item.location = "";
+      }
+
+      // Getting the text & HTML content of the whole page
+      try {
+        item.textContent = await eventPage.$eval('#event .event-description', (div) => div.innerText);
+        item.htmlContent = await eventPage.evaluate(() => document.documentElement.outerHTML);
+      } catch (error) {
+        item.textContent = "";
+        item.htmlContent = "";
+      }
+
       // Closing tab
       console.log(`Closing page: Scraping finished for ${item.link}`);
       await eventPage.close();
@@ -175,23 +187,30 @@ async function parseAtaquillaDOM(entryPoint, maxPages) {
       // if nothing failed create an event instance and push it to the list of events
       // The EventItem constructor should handle all sanity checks and conversions
       const tempItem = new EventItem(
-          item.title,
-          item.link,
-          item.price,
-          item.content,
-          item.image,
-          item.source,
-          item.initDate,
-          item.endDate
+        {
+          source : item.source,
+          title : item.title,
+          link : item.link,
+          price : item.price,
+          description : item.description,
+          initDate : item.initDate,
+          endDate : item.endDate,
+          image : item.image,
+          location : item.location,
+          textContent : item.textContent,
+          htmlContent : item.htmlContent
+        }
       );
 
       listOfEvents.push(tempItem);
 
     }
 
-    // For loope ended, close the browser
+    // For loope ended, close the browser & virtual display
     console.log("Closing browser in Ataquilla");
     await browser.close();
+    virtualDisplay.stopSync();
+
     return listOfEvents;
 }
 
@@ -199,7 +218,7 @@ async function parseAtaquillaDOM(entryPoint, maxPages) {
 const entryPoint = 'https://entradas.ataquilla.com/ventaentradas/es/buscar?orderby=next_session&orderway=asc&search_query=Encuentra+tu+evento&search_city=A+Coru%C3%B1a&search_category=';
 const maxPages = 1;
 
-const scrapedItems = parseAtaquillaDOM(entryPoint, maxPages);
+const scrapedItems = parseAtaquillaDOM(entryPoint, maxPages, true);
 */
 
 module.exports = parseAtaquillaDOM;

@@ -1,0 +1,17 @@
+{
+    "Movie": "Events related to movies, such as screenings or film festivals.",
+    "Music / Concert": "Events related to music, such as concerts or music festivals.",
+    "Stand-up Comedy": "Events related to stand-up comedy performances.",
+    "Children Activity": "Events specifically designed for children, such as playdates or educational activities.",
+    "Community Festival": "Events related to community festivals, such as local celebrations or cultural festivals.",
+    "Food / Culinary event": "Events related to food, such as cooking classes or food festivals.",
+    "Tech / Innovation conference": "Events related to technology and innovation, such as tech conferences or hackathons.",
+    "Educational seminar": "Events related to education, such as seminars or lectures.",
+    "Health & Wellness": "Events related to health and wellness, such as yoga classes or wellness retreats.",
+    "Charity / Fundraising": "Events related to charity or fundraising, such as charity runs or fundraising galas.",
+    "Workshop": "Events related to learning new skills, such as workshops or masterclasses.",
+    "Sport event": "Events related to sports, such as matches or tournaments.",
+    "Art Exhibition": "Events related to art, such as art exhibitions or gallery openings.",
+    "Meetup": "Events related to social gatherings, such as meetups or networking events.",
+    "Others": "Events that do not fit into the other categories."
+}

@@ -15,11 +15,11 @@ class ReadTextFromImage {
      *
      * @param {string} [provider="azure"] - Select between azure (default) or google (not implemented yet).
      */
-    constructor(provider = "azure") {
+    constructor(authConfigObj, provider = "azure") {
         this.provider = provider;
         
         try {
-            this.authConfig = JSON.parse(fs.readFileSync('./authentication.config.json', 'utf-8'));
+            this.authConfig = authConfigObj;
             this.key = this.authConfig[`${this.provider}`].key;
             this.endpoint = this.authConfig[`${this.provider}`].endpoint;
         } catch (error) {
@@ -57,6 +57,8 @@ class ReadTextFromImage {
     
             const proposal = await this.azureClient.read(url, options);
     
+            // We need to wait because despite documentation, you'll get empty results if you don't
+            // 2s seems enoough. No it doesn't matter if you use await for this.
             await AbstractDomScraper.AbstractDomScraper.waitSomeSeconds(2, 2);
     
             const response = await this.azureClient.getReadResult(proposal["apim-request-id"]);
@@ -72,8 +74,6 @@ class ReadTextFromImage {
             return "";
         }
     }
-
-
 }
 
 module.exports = { ReadTextFromImage };

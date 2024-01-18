@@ -21,7 +21,7 @@ function generateHTML(arrayOfObjects, templateSourceString, templateOutputString
           for (const day of arrayOfObjects) {
             for (const event of day.dayEvents) {
               modifiedEvent = event;
-              event.image = '.' + event.localImageLocation;
+              event.image = event.localImageLocation;
             }
           }
         } catch (error) {

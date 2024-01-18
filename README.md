@@ -17,6 +17,8 @@ Project structure:
 
 - Assumes you have Chromium installed.
 
+- Assumes you already installed the inference server (`../inference/readme.md`)
+
 1. Create a directory `cometocoruna` with `mkdir ./cometocoruna` -> `cd cometocoruna`.
 
 2. Clone the repo with `git clone https://github.com/iagovar/cometocoruna.git ./`.

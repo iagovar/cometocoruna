@@ -1,6 +1,6 @@
 ﻿# ignoramos todos los archivos de configuración
 
-/calendar/authentication.config.json
+/calendar/config/authentication.config.json
 /web/config/config.yml
 
 # Ignoramos assets y artículos de la web
@@ -20,11 +20,19 @@
 # Ignoramos cualquier archivo de test que pueda haber
 /calendar/test.*
 /calendar/testing.*
+/calendar/test/
+/calendar/tests/
+/calendar/sandbox/
 
 # Ignore the laragon folder
 
 /laragon/
 /laragon/*
+
+# Ignoramos los archivos python de /inference
+
+/inference/*.pyc
+/inference/inference-virtualenv/
 
 ###
 # Template para javascript VVVVV

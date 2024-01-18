@@ -1,48 +1,41 @@
 
 
-// Función para cambiar el estado del display de la clase div.menu-superior
-// (Hamburger Menu) desde div.logo-hamburger
+// Function to change the display state of the div.menu-superior class
+// (Hamburger Menu) from div.logo-hamburger
 function changeMenuSuperior() {
-	// Obtenemos el estado del display de la clase
+	// Get the current display state of the class
 	const display = document.getElementsByClassName('menu-superior')[0].style.display;
 
-	// obtenemos el contenido de div.logo-hamburger
+	// Get the content of div.logo-hamburger
 	const logoHamburger = document.getElementsByClassName('logo-hamburger')[0];
 
-	// Mostramos u ocultamos el menú dependiendo del estado de la clase
+	// Show or hide the menu based on the class state
 	if (display === 'none') {
 		document.getElementsByClassName('menu-superior')[0].style.display = 'initial';
 
-		// Cambiamos el contenido de div.logo-hamburger a ☒;
+		// Change the content of div.logo-hamburger to ☒;
 		logoHamburger.innerHTML = '☒';
 	} else {
 		document.getElementsByClassName('menu-superior')[0].style.display = 'none';
 
-		// Cambiamos el contenido de div.logo-hamburger a ☰
+		// Change the content of div.logo-hamburger to ☰
 		logoHamburger.innerHTML = '☰';
 	}
 }
 
-// Funciones para las pestañas de la tabla de servicios
-
-// Función para cargar URL Externa
-function cargarServicio(servicio) {
-	// Obtiene una lista de todos los divs dentro de .contenido-servicios
-	
-}
+// Fns for the services secction (TODO)
 
 
-/* Emulando el include() de PHP
-Función para cargar el contenido de los elementos <div> con el atributo source
-tipo:
+/* Emulating PHP's include() Function to load the content of elements with the
+source attribute type:
 
-<div source="http://midominio.com/miarchivo.html"></div>
+<div source="http://mydomain.com/myfile.html"></div>
 */
 function loadContent() {
-  var divElements = document.querySelectorAll('div[source]');
+  let divElements = document.querySelectorAll('div[source]');
   
   divElements.forEach(function(div) {
-    var sourceURL = div.getAttribute('source');
+    let sourceURL = div.getAttribute('source');
     
     fetch(sourceURL, { cache: 'no-store' })
       .then(response => response.text())
@@ -50,19 +43,18 @@ function loadContent() {
         div.innerHTML = html;
       })
       .catch(error => {
-        console.error('Error al cargar el contenido:', error);
+        console.error('Error loading file:', error);
       });
   });
 }
 
 
-// Añadimos los event listeners para no llenar el theme de basura
-// Ojo, si falla alguna función, no se ejecutarán las siguientes
-// recuérdalo
-
+// Add event listeners to avoid cluttering the theme
+// Note: If any function fails, the subsequent ones will not be executed
+// Remember this mf!!
 document.addEventListener('DOMContentLoaded', function() {
 	console.log("Inicio de carga de funciones para el objeto document")
-  htmlTableOfContents()
-  loadContent()
-  console.log("Fin de carga de funciones para el objeto document")
+	htmlTableOfContents()
+	loadContent()
+	console.log("Fin de carga de funciones para el objeto document")
 });

@@ -13,42 +13,61 @@ const webp = require('@namesmt/webp-converter');
  * @class
  */
 class EventItem {
-    /**
-     * Constructor for the Event class.
-     * @constructor
-     * @param {string} title - The title of the event.
-     * @param {string} link - The link of the event.
-     * @param {string} price - The price of the event.
-     * @param {string} content - The content/description of the event.
-     * @param {string} image - The image URL of the event.
-     * @param {string} source - The source of the event.
-     * @param {string|number|Date} initDate - The start date of the event.
-     * @param {string|number|Date} endDate - The end date of the event.
-     */
-    constructor(title, link, price, content, image, source, initDate, endDate, location = "") {
-        this.title = this.sanitizeStringForDuckDB(title);
-        this.link = link;
-        this.price = this.setPrice(price);
-        this.content = this.sanitizeStringForDuckDB(content);
-        this.image = image;
-        this.source = source;
+  /**
+ * Constructor function that initializes an instance of the EventItem class.
+ *
+ * @param {Object} eventObject - The event object containing the necessary data.
+ * @param {string} eventObject.title - Required. 
+ * @param {string} eventObject.link - Required (it's the primary key)
+ * @param {number} eventObject.price - Required.
+ * @param {string} eventObject.description - Optional.
+ * @param {string} eventObject.image - Optional, but advisable.
+ * @param {string} eventObject.source - Required.
+ * @param {string} eventObject.initDate - Required.
+ * @param {string} eventObject.endDate - Optional.
+ * @param {string} eventObject.location - Optional.
+ * @param {string} eventObject.categories - Optional.
+ * @param {string} eventObject.textContent - Optional.
+ * @param {string} eventObject.htmlContent - Optional.
+ * @param {string} eventObject.screenshot - Optional.
+ */
+    constructor(eventObject) {
 
-        this.initDate = initDate;
-        this.endDate = endDate;
-
-        this.initDateISO = this.convertAnyDateToISO(initDate);
-        this.endDateISO = this.convertAnyDateToISO(endDate);
-        this.initDateHuman = this.convertISODateToHumanReadable(this.initDateISO);
-        this.endDateHuman = this.convertISODateToHumanReadable(this.endDateISO);
-        this.scrapedDateISO = formatISO(new Date());
-
-        this.location = location;
-
-        // All invalid events will be discarded before submitting to DB
-        this.isValidEvent = true;
+      // Required data. Throw error if missing.
+      // Don't include price, as sometimes it can't be retrieved and comes as undefined
+      // In theory scrapers should discard events without this fields
+      const requiredFields = ['title', 'link', 'source', 'initDate'];
+      for (const field of requiredFields) {
+        if (eventObject[field] === undefined) {
+          throw new Error(`Missing required ${field} field on instance of EventItem:\n${JSON.stringify(eventObject)}\n\n`);
+        }
+      }
 
 
+      this.title = this.sanitizeStringForDuckDB(eventObject.title);
+      this.link = eventObject.link;
+      this.price = this.setPrice(eventObject.price);
+      this.description = this.sanitizeStringForDuckDB(eventObject.description);
+      this.image = eventObject.image;
+      this.source = eventObject.source;
 
+      this.initDate = eventObject.initDate;
+      this.endDate = eventObject.endDate;
+
+      this.initDateISO = this.convertAnyDateToISO(eventObject.initDate);
+      this.endDateISO = this.convertAnyDateToISO(eventObject.endDate);
+      this.initDateHuman = this.convertISODateToShortDate(this.initDateISO);
+      this.endDateHuman = this.convertISODateToShortDate(this.endDateISO);
+      this.scrapedDateISO = formatISO(new Date());
+      
+      this.location = eventObject.location;
+      this.categories = eventObject.categories;
+      this.textContent = eventObject.textContent;
+      this.htmlContent = eventObject.htmlContent;
+      this.screenshot = eventObject.screenshot;
+
+      // All invalid events will be discarded before submitting to DB
+      this.isValidEvent = true;
     }
 
     /**
@@ -81,6 +100,8 @@ class EventItem {
         case "de balde":
         case "Gratis":
         case "gratis":
+        case "free":
+        case undefined:
             finalPrice = "Free or unavailable";
             break;
     
@@ -127,6 +148,7 @@ class EventItem {
             'yyyy-MM-dd\'T\'HH:mm:ss.SSSXXX', // timestampz format
             'yyyy-MM-dd HH:mm:ss.S', // Format with milliseconds coming from aytoCoruna
             'yyyy-MM-dd\'T\'HH:mmXXX', // coming from meetup, timestamp with timezone offset
+            'yyyy-MM-dd\'T\'HH:mm:ssXXX', // new meetup format
             // Add more formats if needed
           ];
           
@@ -170,6 +192,22 @@ class EventItem {
         this.isValidEvent = false;
         return null;
       }
+
+    convertISODateToShortDate(inputDate) {
+      let date = null;
+    
+      if (typeof inputDate === 'string') {
+        date = parseISO(inputDate);
+      }
+    
+      if (isValid(date)) {
+        return format(date, 'dd/MM HH:mm');
+      }
+    
+      console.error(`Invalid date format for Human readable input: ${inputDate} in ${this.link}`);
+      this.isValidEvent = false;
+      return null;
+    }
 
     /**
      * Sanitizes a string for DuckDB by replacing single quotes with two consecutive single quotes.
@@ -215,7 +253,7 @@ class EventItem {
       // or arrays, that it's what we'll find in JSON from pages.
       for (const iterator of Object.values(objToCheck)) {
           // if iterator is a string, check if it contains "online"
-          if (typeof iterator === "string" && iterator.includes("online")) {
+          if (typeof iterator === "string" && iterator.toLowerCase().includes("online")) {
               return true;
           }
           // if iterator is an array or object, call checkIfOnline() recursively on it
@@ -243,20 +281,16 @@ class EventItem {
      * 
      * IT MAY PRODUCE FALSE POSITIVES, specially the image comparison. I'm trying hard to not use LLM APIs.
      * 
-     * YOU SHOULDN'T PUSH EVENTS ON DIFFERENT DAYS, because it will lable repeating events as duplicates.
+     * YOU SHOULDN'T PUSH EVENTS ON DIFFERENT DAYS, because it will label repeating events as duplicates.
      * 
      * @param {Array} arrayOfEvents - The array of events to check for duplicates (SAME DAY!!).
      * @return {Array} The filtered array of events without duplicates.
      */
     static async checkForDuplicates(arrayOfEvents) {
-      let scores = {
-        aytoCoruna  : 1,
-        meetup      : 2,
-        quincemil   : 3,
-        eventbrite  : 4,
-        ataquilla   : 5,
-      }; // JS object with each dataSource score
-
+      // JS object with each dataSource score
+      const scoresFilePath = `${__dirname}/config/filtering_scores.json`;
+      let scores = JSON.parse(fs.readFileSync(scoresFilePath));
+      
       // Build some flags for handling duplicates
       for (const thisEvent of arrayOfEvents) {
         thisEvent.isDuplicated = false;
@@ -401,9 +435,10 @@ class EventItem {
      * @param {Array} arrayOfEvents - The array of events to be filtered.
      * @return {Array} filteredArray - The filtered array of events.
      */
-    static async filterByBannedStrings(arrayOfEvents) {
+    static async filterByBannedStrings(arrayOfEvents, bannedStringsFilePath) {
+      let bannedStrings;
       try {
-        const bannedStrings = fs.readFileSync('./bannedstrings.txt', 'utf-8').split('\n');
+        bannedStrings = fs.readFileSync(bannedStringsFilePath, 'utf-8').split('\n');
       } catch (error) {
         console.error('Error reading bannedstrings.txt:', error);
         return arrayOfEvents;
@@ -415,7 +450,7 @@ class EventItem {
       for (const event of arrayOfEvents) {
         let isBanned = false;
         for (const bannedString of bannedStrings) {
-          if (event.title.tolowerCase().includes(bannedString.tolowerCase())) {
+          if (event.title.toLowerCase().includes(bannedString.toLowerCase())) {
             isBanned = true;
             break;
           }
@@ -446,7 +481,7 @@ class EventItem {
 
       // Generate a unique filename based on milisecons since Jan 1 1970
       const timestamp = Date.now();
-      const filename = `${timestamp}.${extension}`;
+      let filename = `${timestamp}.${extension}`;
   
       // Create the destination folder if it doesn't exist
       if (!fs.existsSync(imgLocalDestinationFolder)) {
@@ -463,11 +498,9 @@ class EventItem {
       if (extension === 'webp') {
         try {
           webp.grant_permission();
-          const absolutePath = process.cwd()
-          const localDestinationWithoutDot = imgLocalDestinationFolder.slice(1);
-          const fileToConvert = `${absolutePath}${localDestinationWithoutDot}${filename}`;
-          const destinationFile = `${absolutePath}${localDestinationWithoutDot}${timestamp}.png`;
-          const result = await webp.dwebp(fileToConvert, destinationFile, '-o');
+          const destinationFile = `${imgLocalDestinationFolder}${timestamp}.jpg`;
+          const result = await webp.dwebp(filePath, destinationFile, '-o');
+          filename = `${timestamp}.jpg`;
         } catch (error) {
           console.error(`Error converting webp to jpg: ${error}`);
         }

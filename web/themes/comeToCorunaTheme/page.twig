@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% if current_page %}
+    <link rel="canonical" href="{{ current_page.url }}" />
+    {% endif %}
+    {% if meta.description %}
+    <meta name="description" content="{{ meta.description|striptags }}" />
+    {% endif %}
+    <title>{% if meta.title %}{{ meta.title }} | {% endif %}{{ site_title }}</title>
+    <link rel="stylesheet" href="{{ theme_url }}/css/general-v1.1.css">
+    <link rel="stylesheet" href="{{ theme_url }}/css/{{meta.classname}}-v1.1.css">
+    <script type="text/javascript" src="{{ theme_url }}/js/general.js" defer></script>
+    <script src="{{ theme_url }}/js/table-of-contents.js" defer></script>
+</head>
+<body class="{{meta.classname}}">
+    <header class="{{meta.classname}}">
+        <nav>
+            <div class="logo"><a href="{{ base_url }}"><img src="{{ theme_url }}/img/logo/logo-black.svg"></a></div>
+            <details class="hamburger-menu">
+                <summary></summary>
+                <div class="top-links">
+                    <a href="{{ base_url }}/why-living-coruna" class="why-living-coruna">Why A Coruña?</a>
+                    <a href="{{ base_url }}/finding-home" class="finding-home">Finding a home</a>
+                    <a href="{{ base_url }}/moving-around" class="moving-around">Moving around</a>
+                    <a href="{{ base_url }}/working-coruna" class="working">Working</a>
+                    <a href="{{ base_url }}/finding-friends" class="finding-friends">Finding friends</a>
+                    <a href="{{ base_url }}/events" class="events">Events</a>
+                    <a href="{{ base_url }}/services" class="services">Services</a>
+                </div>
+            </details>
+        </nav>
+        <div class="meta description">
+            {% if meta.description %}
+                {{ meta.description|striptags }}
+            {% endif %}
+        </div>
+        <div class="meta title">
+            {% if meta.title %}
+                {{ meta.title|striptags }}
+            {% endif %}
+        </div>
+        <div class="scroll">
+            <img src="{{ theme_url }}/img/icons/icon-chevron-down.svg">
+            <span>Scroll and See</span>
+        </div>
+    </header>
+    <main class="content {{meta.classname}}">
+        {{ content}}
+    </main>
+    <footer></footer>
+</body>
+</html>
