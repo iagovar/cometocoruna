@@ -3,16 +3,20 @@
     <div class="day {{cssSelector}}">{{dayName}}</div>
     {{#if dayEvents.length}}
         {{#each dayEvents}}
-            <div class="event {{source}}">
+            <div class="event" 
+            data-initDateISO="{{initDateISO}}" 
+            data-endDateISO="{{endDateISO}}" 
+            data-price="{{price}}" 
+            data-source="{{source}}" 
+            data-categories="{{categories}}">
                 <div class="image"><img src="{{image}}" loading="lazy" alt="{{title}}"></div>
                 <div class="content">
-                    <p class="humanDate">{{initDateHuman}} to {{endDateHuman}}</p>
+                    <div class="humanDate">{{initDateHuman}} - {{endDateHuman}}</div>
                     <div class="title">{{title}}</div>
-                    <p class="price">{{price}}</p>
-                    <!-- <p class="location">{{location}}</p> -->
+                    <div class="price">{{price}}</div>
+                    <div class="location"><a href="https://www.google.com/maps?q={{location}}" target="_blank">{{location}}</a></div>
                     <!-- {{variable}} escapes html, {{{variable}}} does not-->
                     <div class="description">{{content}}</div>
-                    <p class="source">Source:  {{source}}</p>
                     <div class="link"><a href="{{link}}">+ INFO</a></div>
                 </div>
             </div>

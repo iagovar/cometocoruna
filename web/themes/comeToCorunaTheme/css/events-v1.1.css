@@ -54,6 +54,9 @@
 .event .content {
 	margin: 0 1em;
 	height: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3em;
 }
 
 .event .title {
@@ -101,7 +104,7 @@
 	border-bottom-right-radius: 0;
 }
 
-.event a {
+.event .link a {
 	margin: 1em 0;
 	float: right;
 	text-align: center;
