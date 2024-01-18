@@ -112,17 +112,13 @@ async function main() {
       ...instagramEventsArray
       );
 
-    // 2.5 Label events with categories with a combination of formal logic and zero-shot classifiers. This requires to have te Flask inference server up and running
+    // 2.5 Label events with categories & locations with a combination of formal logic and zero-shot classifiers. This requires to have te Flask inference server up and running
 
     const localInferenceServer = new LocalInference("http://localhost:5000/inference");
 
     await localInferenceServer.startServer();
-
     await localInferenceServer.getCategories(arrayOfAllEvents);
-
-    // 2.6 Do the same with locations
-    await localInferenceServer.getLocations(arrayOfAllEvents);
-
+    await localInferenceServer.getLocation(arrayOfAllEvents);
     await localInferenceServer.stopServer();
 
     // 3. Store events in DB
