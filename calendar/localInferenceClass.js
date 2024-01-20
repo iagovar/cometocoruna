@@ -26,7 +26,7 @@ class LocalInference {
         this.terminal.stdin.write('source ./inference-virtualenv/bin/activate\n');
         this.terminal.stdin.write(`flask --app inference run --host=0.0.0.0\n`);
         // wait for the server to start
-        await new Promise(resolve => setTimeout(resolve, 10000));
+        await new Promise(resolve => setTimeout(resolve, 20000));
     }
 
     async stopServer() {
@@ -164,7 +164,7 @@ class LocalInference {
 
 /*
 async function main() {
-    const miservidor = new LocalInference("http://localhost:5000/inference");
+    const miservidor = new LocalInference("http://127.0.0.1:5000/inference");
     await miservidor.startServer();
 
     let context = "Me llamo pepita";

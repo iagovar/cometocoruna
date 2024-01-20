@@ -117,10 +117,9 @@ async function main() {
 
     // 2.5 Label events with categories & locations with a combination of formal logic and zero-shot classifiers. This requires to have te Flask inference server up and running
 
-    const localInferenceServer = new LocalInference("http://localhost:5000/inference");
+    const localInferenceServer = new LocalInference("http://127.0.0.1:5000/inference");
 
     await localInferenceServer.startServer();
-    await new Promise(resolve => setTimeout(resolve, 20000));
     await localInferenceServer.getCategories(arrayOfAllEvents);
     await localInferenceServer.getLocation(arrayOfAllEvents);
     await localInferenceServer.stopServer();
