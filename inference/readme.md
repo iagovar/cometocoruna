@@ -10,9 +10,10 @@ This server is not supossed to be exposed to the internet, as it has no authenti
 
 Build upon python virtualenv so:
 
-1. Activate virtualenv ``source ./inference-virtualenv/bin/activate``
-2. Install the requirements ``pip install -r requirements.txt``
-3. Run server with ``flask --app inference run --host=0.0.0.0 --debug``. In my case the inference server is the same hosting the scraper, there you have it in case you want to change the inference location.
+1. Create virtualenv ``python3 -m venv inference-virtualenv``
+2. Activate virtualenv ``source ./inference-virtualenv/bin/activate``
+3. Install the requirements ``pip install -r requeriments.txt``
+4. Run server with ``flask --app inference run --host=0.0.0.0 --debug``. In my case the inference server is the same hosting the scraper, there you have it in case you want to change the inference location.
 
     Remove ``--debug`` in production.
     Be aware that ``--host`` indicates from which adresses are allowed to request, being ``0.0.0.0``all of em.
