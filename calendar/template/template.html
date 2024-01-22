@@ -1,6 +1,6 @@
 <div class="calendar">
-    <div class="filters" style="display: none">
-        <div class="filter">
+    <div class="filters">
+        <div class="filter categories">
             <details id="multiselect">
                 <summary>Show / Hide Categories</summary>
                 {{#each categories}}
@@ -8,10 +8,10 @@
                 {{/each}}
             </details>
         </div>
-        <div class="filter">
+        <div class="filter search">
             <input type="text" id="search" oninput="filterByString(this.value)" placeholder="Type for search">
         </div>
-        <div class="filter">
+        <div class="filter freeEvents">
             <label for="freeEvents">Only free events</label>
             <input type="checkbox" id="freeEvents" onchange="toggleFreeEvents()">
         </div>
