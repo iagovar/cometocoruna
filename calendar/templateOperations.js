@@ -35,12 +35,23 @@ function generateHTML(arrayOfObjects, templateSourceString, templateOutputString
       // Compile the template with Handlebars
       const template = handlebars.compile(templateSourceObj);
   
-      //Create a variable lastUpdated to the current date in dd/mm/yyyy hh:mm
+      // Create a variable lastUpdated to the current date in dd/mm/yyyy hh:mm
       const now = new Date();
       const todayDate = format(now, 'dd/MM/yyyy HH:mm');
+
+      // Read the list of categories for the filters
+      let categoriesList;
+      try {
+        categoriesList = Object.keys(require('./config/categories.config.json'));
+      } catch (error) {
+        console.error(`Error reading categories list: ${error}`);
+      }
   
-      // Generate the HTML using the data from the array of objects and todayDate
-      const html = template({ entries: arrayOfObjects, lastUpdated: todayDate });
+      // Generate the HTML using the data from the array of objects, categoriesList and todayDate
+      const html = template({
+        entries: arrayOfObjects,
+        categories: categoriesList,
+        lastUpdated: todayDate });
   
       // Save the generated HTML to a file
       fs.writeFile(templateOutputString, html, (error) => {

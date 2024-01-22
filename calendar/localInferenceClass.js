@@ -147,6 +147,11 @@ class LocalInference {
               }
       
               event.categories = filteredCategories.join(", ");
+
+              // If no category was returned, set it to 'Others'
+              if (filteredCategories.length === 0) {
+                event.categories = 'Others';
+              }
             } else {
               console.error(`Error ${response.status}: ${response.statusText}`);
             }

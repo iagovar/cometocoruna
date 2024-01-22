@@ -1,9 +1,26 @@
 <div class="calendar">
+    <div class="filters" style="display: none">
+        <div class="filter">
+            <details id="multiselect">
+                <summary>Show / Hide Categories</summary>
+                {{#each categories}}
+                    <label><input type="checkbox" value="{{this}}" checked onchange="filterByCategories()">{{this}}</label>
+                {{/each}}
+            </details>
+        </div>
+        <div class="filter">
+            <input type="text" id="search" oninput="filterByString(this.value)" placeholder="Type for search">
+        </div>
+        <div class="filter">
+            <label for="freeEvents">Only free events</label>
+            <input type="checkbox" id="freeEvents" onchange="toggleFreeEvents()">
+        </div>
+    </div>
 {{#each entries}}
     <div class="day {{cssSelector}}">{{dayName}}</div>
     {{#if dayEvents.length}}
         {{#each dayEvents}}
-            <div class="event" data-initDateISO="{{initDateISO}}" data-endDateISO="{{endDateISO}}" data-price="{{price}}" data-source="{{source}}" data-categories="{{categories}}">
+            <div class="event" data-initDateISO="{{initDateISO}}" data-endDateISO="{{endDateISO}}" data-price="{{price}}" data-source="{{source}}" data-categories="{{categories}}" data-filters="{}">
                 <div class="image"><img src="{{image}}" loading="lazy" alt="{{title}}"></div>
                 <div class="content">
                     <div class="humanDate">{{initDateHuman}} - {{endDateHuman}}</div>
