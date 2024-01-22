@@ -145,13 +145,19 @@ class LocalInference {
                   filteredCategories.push(repliedCategories[i]);
                 }
               }
-      
-              event.categories = filteredCategories.join(", ");
+
+              // If event.source is Meetup, add meetup category if it isn't yet
+              if (event.source.toLowerCase() == 'meetup' && !filteredCategories.includes('Meetup')) {
+                filteredCategories.push('Meetup');
+              }
 
               // If no category was returned, set it to 'Others'
               if (filteredCategories.length === 0) {
-                event.categories = 'Others';
+                filteredCategories.push('Others');
               }
+      
+              event.categories = filteredCategories.join(", ");
+
             } else {
               console.error(`Error ${response.status}: ${response.statusText}`);
             }
