@@ -3,9 +3,11 @@
         <div class="filter categories">
             <details id="multiselect">
                 <summary>Show / Hide Categories</summary>
+                <div class="labels">
                 {{#each categories}}
                     <label><input type="checkbox" value="{{this}}" checked onchange="filterByCategories()">{{this}}</label>
                 {{/each}}
+                </div>
             </details>
         </div>
         <div class="filter search">
